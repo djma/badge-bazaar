@@ -7,8 +7,9 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://xg1zqj7npa07p9pqso6v:pscale_pw_VjqctMnNyZK4r0hN8SQn3gdvn49gbUCAOMEF2dO0d98@aws.connect.psdb.cloud/test?sslaccept=strict"
+  url = env("PRISMA_DB_URL")
 }
+
 
 model Badge {
   id         Int      @id @default(autoincrement())
