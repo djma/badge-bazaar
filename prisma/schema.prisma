@@ -1,0 +1,19 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://xg1zqj7npa07p9pqso6v:pscale_pw_VjqctMnNyZK4r0hN8SQn3gdvn49gbUCAOMEF2dO0d98@aws.connect.psdb.cloud/test?sslaccept=strict"
+}
+
+model Badge {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  name       String   @unique
+  addrMerkle String   @unique
+  addresses  String   @db.LongText
+}

@@ -1,0 +1,33 @@
+{
+  "name": "badge-bazaar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@personaelabs/spartan-ecdsa": "^2.1.4",
+    "@prisma/client": "^5.1.0",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.4.6",
+    "alchemy-sdk": "^2.9.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "json-bigint": "^1.0.0",
+    "mysql2": "^3.5.2",
+    "prisma": "^5.1.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/json-bigint": "^1.0.1"
+  }
+}
