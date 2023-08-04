@@ -14,7 +14,7 @@
     "dev:server": "ts-node-dev --respawn --transpile-only src/server.ts",
     "#dev:client": "esbuild src/web/index.tsx --bundle --outdir=www/dist --watch",
     "dev:client": "ts-node-dev build.ts --watch",
-    "build": "yarn tsc && yarn prisma:generate && esbuild src/web/index.tsx --bundle --minify --outdir=www/dist --loader:.svg=dataurl",
+    "build": "yarn prisma:generate && ts-node build.ts",
     "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate"
   },
