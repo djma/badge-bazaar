@@ -10,3 +10,11 @@ build({
   plugins: [polyfillNode()],
   minify: isProd,
 });
+
+build({
+  entryPoints: ["src/server.ts"],
+  bundle: true,
+  outdir: "dist/src",
+  minify: isProd,
+  platform: "node",
+});

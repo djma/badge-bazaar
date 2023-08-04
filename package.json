@@ -16,7 +16,8 @@
     "dev:client": "ts-node-dev build.ts --watch",
     "build": "yarn prisma:generate && ts-node build.ts",
     "start": "node dist/src/server.js",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "clean": "rm -rf dist && rm -rf www/dist"
   },
   "keywords": [],
   "author": "",
