@@ -3,9 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
+  "_scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "yarn tsc && yarn prisma:generate",
+    "build": "yarn tsc && yarn prisma:generate && esbuild src/web/index.tsx --bundle --minify --outdir=www/dist --loader:.svg=dataurl",
+    "start": "node dist/src/server.js",
+    "prisma:generate": "prisma generate"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=development concurrently \"yarn dev:server\" \"yarn dev:client\"",
+    "dev:server": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "#dev:client": "esbuild src/web/index.tsx --bundle --outdir=www/dist --watch",
+    "dev:client": "ts-node-dev build.ts --watch",
+    "build": "yarn tsc && yarn prisma:generate && esbuild src/web/index.tsx --bundle --minify --outdir=www/dist --loader:.svg=dataurl",
     "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate"
   },
@@ -13,24 +22,34 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pcd/passport-interface": "^0.6.0",
+    "@pcd/pcd-types": "^0.6.0",
+    "@pcd/semaphore-identity-pcd": "^0.6.0",
+    "@pcd/semaphore-signature-pcd": "^0.6.0",
     "@personaelabs/spartan-ecdsa": "^2.1.4",
     "@prisma/client": "^5.1.0",
     "@types/express": "^4.17.17",
     "@types/node": "^20.4.6",
     "alchemy-sdk": "^2.9.2",
     "dotenv": "^16.3.1",
+    "esbuild": "^0.18.17",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "express": "^4.18.2",
     "json-bigint": "^1.0.0",
     "mysql2": "^3.5.2",
     "prisma": "^5.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.1.6"
   },
-   "engines": {
+  "engines": {
     "node": ">=18 <19"
   },
   "devDependencies": {
-    "@types/json-bigint": "^1.0.1"
+    "@types/json-bigint": "^1.0.1",
+    "@types/react-dom": "^18.2.7",
+    "concurrently": "^8.2.0"
   }
 }
