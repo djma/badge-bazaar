@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "yarn tsc --noEmit",
+    "build": "yarn tsc --noEmit && yarn prisma:generate",
     "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate"
   },
