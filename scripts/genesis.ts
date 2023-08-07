@@ -1,8 +1,9 @@
-import { Poseidon, Tree } from "@personaelabs/spartan-ecdsa";
+import { Poseidon } from "@personaelabs/spartan-ecdsa";
 import { PrismaClient } from "@prisma/client";
 import * as dotenv from "dotenv";
 import fs from "fs";
 import JSONBig from "json-bigint";
+import Tree from "../src/tree";
 
 const prisma = new PrismaClient();
 dotenv.config();
@@ -25,7 +26,6 @@ async function main() {
   const poseidon = new Poseidon();
   await poseidon.initWasm();
   const treeDepth = 20;
-  const tree = new Tree(treeDepth, poseidon);
   const addresses: string[] = [];
 
   const data = readFileSyncIntoString("genesis.txt");
@@ -41,29 +41,44 @@ async function main() {
       const [address, _amount] = line.split(",");
       // console.log(address);
 
-      tree.insert(BigInt(address));
       addresses.push(address);
     });
 
-  // timer end
-  const end = Date.now();
-  console.log(`Time elapsed: ${end - start} ms`);
+  console.log("addresses: ", addresses.length);
+  console.log("addresses string size: ", addresses.join("\n").length);
+
+  const tree = new Tree(
+    treeDepth,
+    poseidon,
+    addresses.map((a) => BigInt(a))
+  );
 
   const root = tree.root();
   const rootHex = root.toString(16);
 
   const serializedTree = JSONBig.stringify(tree);
-  // console.log(serializedTree);
+  console.log("tree size: ", serializedTree.length);
 
   console.log(rootHex);
 
-  console.log(addresses.join("\n"));
+  // Manually constructed merkle proof object because browser slow,
+  // so we precalculate all the proofs from the server and send them to the client
+  const addrPaths = [...Array(addresses.length).keys()].map((i) => {
+    const proof = tree.createProof(i);
+    return proof.siblings.map((s) => s[0].toString(16));
+  });
+  console.log("allPaths size: ", JSONBig.stringify(addrPaths).length);
+
+  // timer end
+  const end = Date.now();
+  console.log(`Time elapsed: ${end - start} ms`);
 
   await prisma.badge.create({
     data: {
       name: "ethereumGenesis",
-      addresses: addresses.join("\n"),
-      addrMerkle: tree.root().toString(16),
+      rootHex: rootHex,
+      addresses: JSON.stringify(addresses),
+      addrPaths: JSON.stringify(addrPaths),
     },
   });
 }

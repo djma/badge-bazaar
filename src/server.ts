@@ -1,5 +1,5 @@
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import { Badge, PrismaClient } from "@prisma/client";
 import path from "path";
 import { usePassportPopupSetup } from "@pcd/passport-interface";
 
@@ -49,7 +49,7 @@ app.get("/popup", (req, res) => {
 });
 
 app.get("/badge", async (req, res) => {
-  const badges = req.query.id
+  const badge: Badge | null = req.query.id
     ? await prisma.badge.findUnique({
         where: {
           id: parseInt(req.query.id as string),
@@ -62,7 +62,7 @@ app.get("/badge", async (req, res) => {
         },
       })
     : null;
-  res.json(badges);
+  res.json(badge);
 });
 
 app.listen(port, () => {

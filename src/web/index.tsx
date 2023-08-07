@@ -7,8 +7,11 @@ import {
   SemaphoreSignaturePCD,
   SemaphoreSignaturePCDPackage,
 } from "@pcd/semaphore-signature-pcd";
+import { MerkleProof, Poseidon } from "@personaelabs/spartan-ecdsa";
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import Tree from "../tree";
+import { Badge } from "@prisma/client";
 
 const IS_PROD = process.env.NODE_ENV === "prod";
 // const PASSPORT_URL = IS_PROD ? "https://zupass.org/" : "http://localhost:3000/";
@@ -32,7 +35,24 @@ function App() {
       <h2>3. Browse Badge Bazaar</h2>
       <ol>
         <li>
-          Ethereum Genesis Badge: <button>prove</button>
+          Ethereum Genesis Badge:
+          <ul>
+            <li>
+              <a href="/badge?name=ethereumGenesis">Data</a>
+            </li>
+            <li>
+              <GetBadgeButton />
+            </li>
+          </ul>
+        </li>
+        <li>
+          NFT Badge (Azuki):
+          <ul>
+            <li>Data</li>
+            <li>
+              <GetBadgeButton disabled={true} />
+            </li>
+          </ul>
         </li>
       </ol>
     </div>
@@ -84,9 +104,13 @@ function ConnectPCDPassButton() {
     null
   );
   const [pcdStr] = usePassportPopupMessages();
+  const [isListening, setIsListening] = React.useState(false);
 
   React.useEffect(() => {
     if (!pcdStr) return;
+    if (!isListening) return;
+    setIsListening(false);
+
     const parsed = JSON.parse(pcdStr) as SerializedPCD;
     if (parsed.type !== SemaphoreSignaturePCDPackage.name) return;
     (async function () {
@@ -94,7 +118,7 @@ function ConnectPCDPassButton() {
       console.log("Got Zuzalu PCD", pcd);
       setIdentity(pcd);
     })();
-  }, [pcdStr]);
+  }, [isListening, pcdStr]);
 
   if (identity) {
     return <p>PCDPass ID: {identity?.id}</p>;
@@ -102,6 +126,7 @@ function ConnectPCDPassButton() {
     return (
       <button
         onClick={() => {
+          setIsListening(true);
           openSemaphoreSignaturePopup(
             PASSPORT_URL,
             window.location.origin + "/popup",
@@ -115,6 +140,72 @@ function ConnectPCDPassButton() {
       </button>
     );
   }
+}
+
+interface GetBadgeButtonProps {
+  disabled?: boolean;
+}
+
+function GetBadgeButton({ disabled = false }: GetBadgeButtonProps) {
+  const [pcdStr] = usePassportPopupMessages();
+  const [isListening, setIsListening] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isListening) return;
+    setIsListening(false);
+  }, [isListening]);
+
+  return (
+    <button
+      disabled={disabled}
+      onClick={async () => {
+        const preBadge: Badge = await (
+          await fetch("/badge?name=ethereumGenesis")
+        ).json();
+
+        console.log("preBadge", preBadge);
+        console.log("size", preBadge.addresses.split("\n").length);
+
+        const poseidon = new Poseidon();
+        await poseidon.initWasm();
+        const treeDepth = 20; // Provided circuits have tree depth = 20
+
+        const startMs = Date.now();
+        // const addrTree = new Tree(
+        //   treeDepth,
+        //   poseidon,
+        //   preBadge.addresses.split("\n").map((addr) => BigInt(addr))
+        // );
+        const addrs: string[] = JSON.parse(preBadge.addresses);
+        const addrPaths: string[][] = JSON.parse(preBadge.addrPaths);
+        const index = addrs.findIndex(
+          (addr) => addr === "0x0032403587947b9f15622a68d104d54d33dbd1cd"
+        );
+
+        // Manually constructed merkle proof object because browser slow,
+        // so we precalculate all the proofs from the server and send them to the client
+        const proof: MerkleProof = {
+          root: BigInt("0x" + preBadge.rootHex),
+          siblings: addrPaths[index].map((siblingHex) => [
+            BigInt("0x" + siblingHex),
+          ]),
+          pathIndices: index
+            .toString(2)
+            .padStart(treeDepth, "0")
+            .split("")
+            .map((bit) => (bit === "1" ? 1 : 0))
+            .reverse(), // little endian
+        };
+        console.log("Merkle proof", proof);
+        const endMs = Date.now();
+        console.log("Merkle proof time", endMs - startMs, "ms");
+
+        alert("Getting badge");
+      }}
+    >
+      Get badges
+    </button>
+  );
 }
 
 const container = document.getElementById("root");

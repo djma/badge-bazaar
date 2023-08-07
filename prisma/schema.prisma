@@ -7,14 +7,14 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url = env("PRISMA_DB_URL")
+  url      = env("PRISMA_DB_URL")
 }
 
-
 model Badge {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  name       String   @unique
-  addrMerkle String   @unique
-  addresses  String   @db.LongText
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  name      String   @unique
+  rootHex   String   @unique
+  addresses String   @db.LongText
+  addrPaths String   @db.LongText
 }
