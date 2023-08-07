@@ -25,10 +25,16 @@ function App() {
       <p>The only limit is yourself</p>
       <p>Welcome to Badge Bazaar</p>
 
-      <h2>Ethereum foo</h2>
+      <h2>1. Connect Ethereum Wallet</h2>
       <ConnectWalletButton />
-      <h2>PCD pass foo</h2>
+      <h2>2. Connect PCD Pass</h2>
       <ConnectPCDPassButton />
+      <h2>3. Browse Badge Bazaar</h2>
+      <ol>
+        <li>
+          Ethereum Genesis Badge: <button>prove</button>
+        </li>
+      </ol>
     </div>
   );
 }
@@ -78,6 +84,7 @@ function ConnectPCDPassButton() {
     null
   );
   const [pcdStr] = usePassportPopupMessages();
+
   React.useEffect(() => {
     if (!pcdStr) return;
     const parsed = JSON.parse(pcdStr) as SerializedPCD;
@@ -85,23 +92,29 @@ function ConnectPCDPassButton() {
     (async function () {
       const pcd = await SemaphoreSignaturePCDPackage.deserialize(parsed.pcd);
       console.log("Got Zuzalu PCD", pcd);
+      setIdentity(pcd);
     })();
   }, [pcdStr]);
-  return (
-    <button
-      onClick={() => {
-        openSemaphoreSignaturePopup(
-          PASSPORT_URL,
-          window.location.origin + "/popup",
-          "message to be signed",
-          false
-        );
-      }}
-      // disabled={loggingIn}
-    >
-      Connect PCD Pass
-    </button>
-  );
+
+  if (identity) {
+    return <p>PCDPass ID: {identity?.id}</p>;
+  } else {
+    return (
+      <button
+        onClick={() => {
+          openSemaphoreSignaturePopup(
+            PASSPORT_URL,
+            window.location.origin + "/popup",
+            "message to be signed",
+            false
+          );
+        }}
+        // disabled={loggingIn}
+      >
+        Connect PCD Pass
+      </button>
+    );
+  }
 }
 
 const container = document.getElementById("root");
