@@ -1,4 +1,5 @@
 import {
+  constructPassportPcdProveAndAddRequestUrl,
   openSemaphoreSignaturePopup,
   usePassportPopupMessages,
 } from "@pcd/passport-interface";
@@ -12,12 +13,19 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import Tree from "../tree";
 import { Badge } from "@prisma/client";
+import { SigningKey, computeAddress, ethers, hashMessage, id } from "ethers";
+import { EthereumGroupPCDPackage } from "@pcd/ethereum-group-pcd";
 
 const IS_PROD = process.env.NODE_ENV === "prod";
 // const PASSPORT_URL = IS_PROD ? "https://zupass.org/" : "http://localhost:3000/";
 const PASSPORT_URL = "https://zupass.org/";
+const { ethereum } = window as any;
 
 function App() {
+  const [pcdPassId, setpcdPassId] =
+    React.useState<SemaphoreSignaturePCD | null>(null);
+  const [ethSignature, setEthSignature] = React.useState<string | null>(null);
+
   return (
     <div>
       <h1>Welcome to Badge Bazaar</h1>
@@ -31,7 +39,12 @@ function App() {
       <h2>1. Connect Ethereum Wallet</h2>
       <ConnectWalletButton />
       <h2>2. Connect PCD Pass</h2>
-      <ConnectPCDPassButton />
+      <ConnectPCDPassButton
+        onConnect={(pcd, ethSig) => {
+          setpcdPassId(pcd);
+          setEthSignature(ethSig);
+        }}
+      />
       <h2>3. Browse Badge Bazaar</h2>
       <ol>
         <li>
@@ -41,7 +54,10 @@ function App() {
               <a href="/badge?name=ethereumGenesis">Data</a>
             </li>
             <li>
-              <GetBadgeButton />
+              <GetBadgeButton
+                pcdPassId={pcdPassId}
+                ethSignature={ethSignature}
+              />
             </li>
           </ul>
         </li>
@@ -63,7 +79,6 @@ function ConnectWalletButton() {
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const { ethereum } = window as any;
     if (!ethereum) {
       console.log("No ethereum");
       return;
@@ -86,7 +101,6 @@ function ConnectWalletButton() {
   return (
     <button
       onClick={() => {
-        const { ethereum } = window as any;
         ethereum
           .request({ method: "eth_requestAccounts" })
           .then((accounts: string[]) => {
@@ -99,7 +113,11 @@ function ConnectWalletButton() {
   );
 }
 
-function ConnectPCDPassButton() {
+function ConnectPCDPassButton({
+  onConnect,
+}: {
+  onConnect?: (pcd: SemaphoreSignaturePCD, ethSignature: string) => void;
+}) {
   const [identity, setIdentity] = React.useState<SemaphoreSignaturePCD | null>(
     null
   );
@@ -113,16 +131,31 @@ function ConnectPCDPassButton() {
 
     const parsed = JSON.parse(pcdStr) as SerializedPCD;
     if (parsed.type !== SemaphoreSignaturePCDPackage.name) return;
-    (async function () {
-      const pcd = await SemaphoreSignaturePCDPackage.deserialize(parsed.pcd);
+    SemaphoreSignaturePCDPackage.deserialize(parsed.pcd).then((pcd) => {
       console.log("Got Zuzalu PCD", pcd);
       setIdentity(pcd);
-    })();
+
+      // Sign the identity commitment
+      const provider = new ethers.BrowserProvider(ethereum);
+      provider
+        .getSigner()
+        .then((signer) => {
+          return signer.signMessage(pcd!.id!);
+        })
+        .then((signature) => {
+          onConnect?.(pcd!, signature);
+        });
+    });
   }, [isListening, pcdStr]);
 
   if (identity) {
     return <p>PCDPass ID: {identity?.id}</p>;
   } else {
+    let walletAddress;
+    ethereum.request({ method: "eth_accounts" }).then((accounts: string[]) => {
+      walletAddress = accounts[0];
+    });
+
     return (
       <button
         onClick={() => {
@@ -130,7 +163,7 @@ function ConnectPCDPassButton() {
           openSemaphoreSignaturePopup(
             PASSPORT_URL,
             window.location.origin + "/popup",
-            "message to be signed",
+            walletAddress,
             false
           );
         }}
@@ -143,10 +176,12 @@ function ConnectPCDPassButton() {
 }
 
 interface GetBadgeButtonProps {
+  pcdPassId?: SemaphoreSignaturePCD | null;
+  ethSignature?: string | null;
   disabled?: boolean;
 }
 
-function GetBadgeButton({ disabled = false }: GetBadgeButtonProps) {
+function GetBadgeButton({ pcdPassId, ethSignature }: GetBadgeButtonProps) {
   const [pcdStr] = usePassportPopupMessages();
   const [isListening, setIsListening] = React.useState(false);
 
@@ -155,9 +190,14 @@ function GetBadgeButton({ disabled = false }: GetBadgeButtonProps) {
     setIsListening(false);
   }, [isListening]);
 
+  const disabled = !pcdPassId || !ethSignature;
+
+  if (disabled) {
+    return <button disabled={true}>Get badges</button>;
+  }
+
   return (
     <button
-      disabled={disabled}
       onClick={async () => {
         const preBadge: Badge = await (
           await fetch("/badge?name=ethereumGenesis")
@@ -166,21 +206,25 @@ function GetBadgeButton({ disabled = false }: GetBadgeButtonProps) {
         console.log("preBadge", preBadge);
         console.log("size", preBadge.addresses.split("\n").length);
 
+        const userAddr = computeAddress(
+          SigningKey.recoverPublicKey(hashMessage(pcdPassId.id), ethSignature!)
+        ).toLowerCase();
+
+        console.log("userAddr", userAddr);
+
         const poseidon = new Poseidon();
         await poseidon.initWasm();
         const treeDepth = 20; // Provided circuits have tree depth = 20
 
         const startMs = Date.now();
-        // const addrTree = new Tree(
-        //   treeDepth,
-        //   poseidon,
-        //   preBadge.addresses.split("\n").map((addr) => BigInt(addr))
-        // );
         const addrs: string[] = JSON.parse(preBadge.addresses);
         const addrPaths: string[][] = JSON.parse(preBadge.addrPaths);
-        const index = addrs.findIndex(
-          (addr) => addr === "0x0032403587947b9f15622a68d104d54d33dbd1cd"
-        );
+        const index = addrs.findIndex((addr) => addr === userAddr);
+
+        if (index === -1) {
+          alert("You can't get this badge");
+          return;
+        }
 
         // Manually constructed merkle proof object because browser slow,
         // so we precalculate all the proofs from the server and send them to the client
@@ -199,6 +243,36 @@ function GetBadgeButton({ disabled = false }: GetBadgeButtonProps) {
         console.log("Merkle proof", proof);
         const endMs = Date.now();
         console.log("Merkle proof time", endMs - startMs, "ms");
+
+        const popupUrl = window.location.origin + "/popup";
+        // const proofUrl = constructPassportPcdProveAndAddRequestUrl<
+        //   typeof EthereumGroupPCDPackage
+        // >(ZUPASS_URL, popupUrl, EthereumGroupPCDPackage.name, {
+        //   identity: {
+        //     argumentType: ArgumentTypeName.PCD,
+        //     pcdType: SemaphoreIdentityPCDPackage.name,
+        //     value: undefined,
+        //     userProvided: true,
+        //     description:
+        //       "The Semaphore Identity which you are signing the message.",
+        //   },
+        //   groupType: {
+        //     argumentType: ArgumentTypeName.String,
+        //     value: GroupType.PUBLICKEY,
+        //   },
+        //   signatureOfIdentityCommitment: {
+        //     argumentType: ArgumentTypeName.String,
+        //     value: signatureOfIdentityCommitment,
+        //   },
+        //   merkleProof: {
+        //     argumentType: ArgumentTypeName.String,
+        //     value: JSONBig({ useNativeBigInt: true }).stringify(
+        //       merkleProof
+        //     ),
+        //   },
+        // });
+
+        // sendPassportRequest(proofUrl);
 
         alert("Getting badge");
       }}
