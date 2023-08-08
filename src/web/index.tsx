@@ -36,6 +36,14 @@ function App() {
     React.useState<SemaphoreSignaturePCD | null>(null);
   const [ethSignature, setEthSignature] = React.useState<string | null>(null);
 
+  if (!ethereum) {
+    return (
+      <div>
+        <p>Please install a browser wallet</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1>Welcome to Badge Bazaar</h1>
