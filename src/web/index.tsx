@@ -101,6 +101,12 @@ function App() {
           pcdPassId={pcdPassId}
           ethSignature={ethSignature}
         />
+        <BadgeListItem
+          badgeName={"erc20-top1000-steth-latest"}
+          title={"Top 1000 stETH holder badge"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
       </ol>
     </div>
   );
