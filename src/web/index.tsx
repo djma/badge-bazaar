@@ -65,31 +65,64 @@ function App() {
       />
       <h2>3. Browse Badge Bazaar</h2>
       <ol>
-        <li>
-          Ethereum Genesis Badge:
-          <ul>
-            <li>
-              <a href="/badge?name=ethereumGenesis">Data</a>
-            </li>
-            <li>
-              <GetBadgeButton
-                pcdPassId={pcdPassId}
-                ethSignature={ethSignature}
-              />
-            </li>
-          </ul>
-        </li>
-        <li>
-          NFT Badge (Azuki):
-          <ul>
-            <li>Data</li>
-            <li>
-              <GetBadgeButton disabled={true} />
-            </li>
-          </ul>
-        </li>
+        <BadgeListItem
+          badgeName={"ethereumGenesis"}
+          title={"Ethereum Genesis Badge"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
+          badgeName={"nft-bayc-20230808"}
+          title={"NFT Badge (BAYC)"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
+          badgeName={"nft-mayc-20230808"}
+          title={"NFT Badge (MAYC)"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
+          badgeName={"nft-azuki-20230808"}
+          title={"NFT Badge (Azuki)"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
+          badgeName={"nft-pudgy-20230808"}
+          title={"NFT Badge (Pudgy Penguins)"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
+          badgeName={"nft-milady-20230808"}
+          title={"NFT Badge (Milady)"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
       </ol>
     </div>
+  );
+}
+
+function BadgeListItem({ badgeName, title, pcdPassId, ethSignature }) {
+  return (
+    <li>
+      {title}
+      <ul>
+        <li>
+          <a href={`/badge?name=${badgeName}`}>Data</a>
+        </li>
+        <li>
+          <GetBadgeButton
+            badgeName={badgeName}
+            pcdPassId={pcdPassId}
+            ethSignature={ethSignature}
+          />
+        </li>
+      </ul>
+    </li>
   );
 }
 
@@ -181,9 +214,11 @@ function ConnectPCDPassButton({
   }, [isListening, pcdStr]);
 
   if (identity) {
-    return <p>PCDPass ID: {identity?.id}</p>;
+    return (
+      <p>PCDPass Semaphore Commitment: {identity?.claim.identityCommitment}</p>
+    );
   } else {
-    let walletAddress;
+    let walletAddress: string;
     ethereum.request({ method: "eth_accounts" }).then((accounts: string[]) => {
       walletAddress = accounts[0];
     });
@@ -208,12 +243,16 @@ function ConnectPCDPassButton({
 }
 
 interface GetBadgeButtonProps {
+  badgeName: string;
   pcdPassId?: SemaphoreSignaturePCD | null;
   ethSignature?: string | null;
-  disabled?: boolean;
 }
 
-function GetBadgeButton({ pcdPassId, ethSignature }: GetBadgeButtonProps) {
+function GetBadgeButton({
+  badgeName,
+  pcdPassId,
+  ethSignature,
+}: GetBadgeButtonProps) {
   const [pcdStr] = usePassportPopupMessages();
   const [isListening, setIsListening] = React.useState(false);
 
@@ -232,7 +271,7 @@ function GetBadgeButton({ pcdPassId, ethSignature }: GetBadgeButtonProps) {
     <button
       onClick={async () => {
         const preBadge: Badge = await (
-          await fetch("/badge?name=ethereumGenesis")
+          await fetch(`/badge?name=${badgeName}`)
         ).json();
 
         console.log("preBadge", preBadge);
@@ -257,7 +296,7 @@ function GetBadgeButton({ pcdPassId, ethSignature }: GetBadgeButtonProps) {
         const index = addrs.findIndex((addr) => addr === userAddr);
 
         if (index === -1) {
-          alert("You can't get this badge");
+          alert("You can't get this badge.");
           return;
         }
 
