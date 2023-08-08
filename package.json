@@ -24,6 +24,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pcd/ethereum-group-pcd": "^0.0.2",
     "@pcd/passport-interface": "^0.6.0",
     "@pcd/pcd-types": "^0.6.0",
     "@pcd/semaphore-identity-pcd": "^0.6.0",
