@@ -66,6 +66,12 @@ function App() {
       <h2>3. Browse Badge Bazaar</h2>
       <ol>
         <BadgeListItem
+          badgeName={"all-tester"}
+          title={"Owner of the tester address Badge"}
+          pcdPassId={pcdPassId}
+          ethSignature={ethSignature}
+        />
+        <BadgeListItem
           badgeName={"ethereumGenesis"}
           title={"Ethereum Genesis Badge"}
           pcdPassId={pcdPassId}
