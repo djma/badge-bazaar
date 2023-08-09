@@ -1,6 +1,7 @@
 import {
   constructPassportPcdAddRequestUrl,
   constructPassportPcdProveAndAddRequestUrl,
+  getWithoutProvingUrl,
   openPassportPopup,
   openSemaphoreSignaturePopup,
   usePassportPopupMessages,
@@ -114,6 +115,61 @@ function App() {
           ethSignature={ethSignature}
         />
       </ol>
+      <h2>4. Use badges</h2>
+      <AddBadgesForAction />
+    </div>
+  );
+}
+
+function AddBadgesForAction() {
+  const [pcds, setPcds] = React.useState<EthereumGroupPCD[]>([]);
+  const [pcdStr] = usePassportPopupMessages();
+  const [isListening, setIsListening] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!pcdStr) return;
+    if (!isListening) return;
+    setIsListening(false);
+
+    const parsed = JSON.parse(pcdStr) as SerializedPCD;
+    if (parsed.type !== EthereumGroupPCDPackage.name) return;
+    EthereumGroupPCDPackage.deserialize(parsed.pcd).then((pcd) => {
+      console.log("Got Ethereum Group PCD", pcd);
+      setPcds((prev) => [...prev, pcd]);
+    });
+  }, [isListening, pcdStr]);
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          setIsListening(true);
+          const popupUrl = window.location.origin + "/popup";
+          const proofUrl = getWithoutProvingUrl(
+            PASSPORT_URL,
+            popupUrl,
+            EthereumGroupPCDPackage.name
+          );
+
+          // console.log("proofUrl", proofUrl);
+
+          // const newLocal = encodeURIComponent(proofUrl);
+          // const url = `/popup?${newLocal}`;
+          const url = `${popupUrl}?proofUrl=${encodeURIComponent(proofUrl)}`;
+          window.open(url, "_blank", "width=360,height=480,top=100,popup");
+          // openPassportPopup(PASSPORT_URL, proofUrl);
+        }}
+      >
+        Add badges for action
+      </button>
+      <ul>
+        {pcds.map((pcd) => (
+          <li key={pcd.id}>
+            {pcd.claim.groupType}:{" "}
+            {pcd.claim.publicInput.circuitPubInput.merkleRoot.toString(16)}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -329,37 +385,6 @@ function GetBadgeButton({
         console.log("Merkle proof", proof);
         const endMs = Date.now();
         console.log("Merkle proof time", endMs - startMs, "ms");
-
-        // new Identity()
-        // const ethGroupPCD = await EthereumGroupPCDPackage.prove({
-        //   merkleProof: {
-        //     argumentType: ArgumentTypeName.String,
-        //     value: JSONBig({ useNativeBigInt: true }).stringify(proof),
-        //   },
-        //   identity: {
-        //     argumentType: ArgumentTypeName.PCD,
-        //     pcdType: SemaphoreIdentityPCDTypeName,
-        //     value: undefined,
-        //     userProvided: true,
-        //   },
-        //   signatureOfIdentityCommitment: {
-        //     argumentType: ArgumentTypeName.String,
-        //     value: ethSignature,
-        //   },
-        //   groupType: {
-        //     argumentType: ArgumentTypeName.String,
-        //     value: GroupType.ADDRESS,
-        //   },
-        // });
-
-        // console.log(
-        //   "ethGroupPCD.root",
-        //   ethGroupPCD.claim.publicInput.circuitPubInput.merkleRoot
-        // );
-        // console.log(
-        //   "ethGroupPCD verifies:",
-        //   await EthereumGroupPCDPackage.verify(ethGroupPCD)
-        // );
 
         const popupUrl = window.location.origin + "/popup";
         const proofUrl = constructPassportPcdProveAndAddRequestUrl<

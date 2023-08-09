@@ -10,7 +10,7 @@ export async function processAndSave(name: string, addresses: string[]) {
   const start = Date.now();
   console.log(Date.now());
 
-  addresses = addresses.sort();
+  addresses = addresses.map((a) => a.toLowerCase()).sort();
 
   const poseidon = new Poseidon();
   await poseidon.initWasm();
