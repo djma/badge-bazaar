@@ -27,8 +27,8 @@ import {
 import JSONBig from "json-bigint";
 
 const IS_PROD = process.env.NODE_ENV === "prod";
-// const PASSPORT_URL = IS_PROD ? "https://zupass.org/" : "http://localhost:3000/";
-const PASSPORT_URL = "https://zupass.org/";
+// const PASSPORT_URL = IS_PROD ? "https://pcdpass.xyz/" : "http://localhost:3000/";
+const PASSPORT_URL = "https://pcdpass.xyz/";
 const { ethereum } = window as any;
 
 function App() {
