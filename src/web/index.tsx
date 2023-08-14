@@ -11,10 +11,15 @@ import {
   SemaphoreSignaturePCD,
   SemaphoreSignaturePCDPackage,
 } from "@pcd/semaphore-signature-pcd";
-import { MerkleProof, Poseidon } from "@personaelabs/spartan-ecdsa";
+import {
+  MembershipProver,
+  MerkleProof,
+  ProverConfig,
+  defaultAddressMembershipPConfig,
+} from "@personaelabs/spartan-ecdsa";
 import * as React from "react";
 import { createRoot } from "react-dom/client";
-import { Badge } from "@prisma/client";
+import { ClaimGroup } from "@prisma/client";
 import { SigningKey, computeAddress, ethers, hashMessage, id } from "ethers";
 import {
   EthereumGroupPCD,
@@ -32,10 +37,34 @@ const IS_PROD = process.env.NODE_ENV === "prod";
 const PASSPORT_URL = "https://pcdpass.xyz/";
 const { ethereum } = window as any;
 
+// TODO: update these to point to pcd pass' static server
+const addrMembershipConfig = {
+  circuit: "../www/public/addr_membership.circuit",
+  witnessGenWasm: "../www/public/addr_membership.wasm",
+};
+const pubkeyMembershipConfig: ProverConfig = {
+  circuit:
+    "https://storage.googleapis.com/personae-proving-keys/membership/pubkey_membership.circuit",
+  witnessGenWasm:
+    "https://storage.googleapis.com/personae-proving-keys/membership/pubkey_membership.wasm",
+};
+const prover = new MembershipProver(defaultAddressMembershipPConfig);
+(async () => {
+  await prover.initWasm();
+})();
+
 function App() {
-  const [pcdPassId, setpcdPassId] =
-    React.useState<SemaphoreSignaturePCD | null>(null);
-  const [ethSignature, setEthSignature] = React.useState<string | null>(null);
+  const [currentTab, setCurrentTab] = React.useState("welcome");
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentTab(window.location.hash.slice(1));
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, []);
 
   if (!ethereum) {
     return (
@@ -47,14 +76,182 @@ function App() {
 
   return (
     <div>
+      <Tabs />
+    </div>
+  );
+}
+
+function Tabs() {
+  const [currentTab, setCurrentTab] = React.useState(
+    window.location.hash.slice(1) ?? "welcome"
+  );
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentTab(window.location.hash.slice(1));
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, []);
+
+  let content: any;
+  if (currentTab === "pcd-ui") {
+    content = <PcdUI />;
+  } else if (currentTab === "message-board") {
+    content = <MessageBoard />;
+  } else {
+    content = <Welcome />;
+  }
+
+  return (
+    <div>
+      <a href="#welcome">Welcome</a>
+      <Pipe />
+      <a href="#message-board">Message Board</a>
+      <Pipe />
+      <a href="#pcd-ui">PCD UI</a>
+      {content}
+    </div>
+  );
+}
+
+function Pipe() {
+  return <span>&nbsp; | &nbsp;</span>;
+}
+
+function MessageBoard() {
+  const [message, setMessage] = React.useState("");
+  const [signature, setSignature] = React.useState<string | null>(null);
+  const [selectedClaims, setSelectedClaims] = React.useState<ClaimGroup[]>([]);
+  const [claimGroups, setClaimGroups] = React.useState<ClaimGroup[]>([]);
+
+  React.useEffect(() => {
+    fetch("/claimGroups")
+      .then((res) => res.json())
+      .then((data) => setClaimGroups(data));
+  }, []);
+
+  React.useEffect(() => {
+    setSignature(null);
+  }, [message]);
+
+  const handleSign = () => {
+    if (!ethereum) {
+      console.log("No ethereum");
+      return;
+    }
+
+    ethereum
+      .request({
+        method: "personal_sign",
+        params: [message, ethereum.selectedAddress],
+      })
+      .then((result: string) => {
+        setSignature(result);
+      });
+  };
+
+  const handlePost = async () => {
+    console.log("Signature:", signature);
+    console.log("Selected claims:", selectedClaims);
+
+    const claimGroup: ClaimGroup = await (
+      await fetch(`/claimGroup?name=${selectedClaims[0].name}`)
+    ).json();
+    const merklePath = getMerklePath(ethereum.selectedAddress, claimGroup);
+    if (!merklePath) {
+      alert("You don't have this badge " + selectedClaims[0].name);
+      return;
+    }
+
+    const msgHash = hashMessage(message);
+    const msgHashBuffer = Buffer.from(msgHash.slice(2), "hex");
+    const groupProof = await prover.prove(
+      signature!,
+      msgHashBuffer,
+      merklePath
+    );
+
+    console.log("groupProof", groupProof);
+  };
+
+  return (
+    <div>
+      <h2>1. Connect Ethereum Wallet</h2>
+      <ConnectWalletButton />
+      <h2>2. Post Message</h2>
+      <label htmlFor="message">Message:</label>
+      <br />
+      <textarea
+        id="message"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={4}
+        cols={50}
+      />
+      <br />
+      <button onClick={handleSign}>Sign</button>
+      <br />
+      {signature && <p>Signature: {signature}</p>}
+      <br />
+      <label htmlFor="claims">Claims:</label>
+      <br />
+      <select
+        id="claims"
+        multiple
+        size={5}
+        onChange={(e) => {
+          const selectedClaimIds = Array.from(
+            e.target.selectedOptions,
+            (option) => parseInt(option.value)
+          );
+          const selectedClaims = claimGroups.filter((claimGroup) =>
+            selectedClaimIds.includes(claimGroup.id)
+          );
+          setSelectedClaims(selectedClaims);
+        }}
+      >
+        {claimGroups.map((claimGroup) => (
+          <option key={claimGroup.id} value={claimGroup.id}>
+            {claimGroup.name}
+          </option>
+        ))}
+      </select>
+      <br />
+      <button
+        disabled={signature === null || selectedClaims.length === 0}
+        onClick={handlePost}
+      >
+        Post
+      </button>
+    </div>
+  );
+}
+
+function Welcome() {
+  return (
+    <div>
       <h1>Welcome to Badge Bazaar</h1>
+      <img src="../public/bazaar.png" />
       <p>This is Badge Bazaar</p>
       <p>You can do anything at Badge Bazaar</p>
       <p>Anything is possible at Badge Bazaar</p>
       <p>Welcome</p>
       <p>The only limit is yourself</p>
       <p>Welcome to Badge Bazaar</p>
+    </div>
+  );
+}
 
+function PcdUI() {
+  const [pcdPassId, setpcdPassId] =
+    React.useState<SemaphoreSignaturePCD | null>(null);
+  const [ethSignature, setEthSignature] = React.useState<string | null>(null);
+
+  return (
+    <div>
       <h2>1. Connect Ethereum Wallet</h2>
       <ConnectWalletButton />
       <h2>2. Connect PCD Pass</h2>
@@ -180,7 +377,7 @@ function BadgeListItem({ badgeName, title, pcdPassId, ethSignature }) {
       {title}
       <ul>
         <li>
-          <a href={`/badge?name=${badgeName}`}>Data</a>
+          <a href={`/claimGroup?name=${badgeName}`}>Data</a>
         </li>
         <li>
           <GetBadgeButton
@@ -317,7 +514,7 @@ interface GetBadgeButtonProps {
 }
 
 function GetBadgeButton({
-  badgeName,
+  badgeName: claimGroupName,
   pcdPassId,
   ethSignature,
 }: GetBadgeButtonProps) {
@@ -332,18 +529,18 @@ function GetBadgeButton({
   const disabled = !pcdPassId || !ethSignature;
 
   if (disabled) {
-    return <button disabled={true}>Get badges</button>;
+    return <button disabled={true}>Get badge</button>;
   }
 
   return (
     <button
       onClick={async () => {
-        const preBadge: Badge = await (
-          await fetch(`/badge?name=${badgeName}`)
+        const claimGroup: ClaimGroup = await (
+          await fetch(`/claimGroup?name=${claimGroupName}`)
         ).json();
 
-        console.log("preBadge", preBadge);
-        console.log("size", preBadge.addresses.split("\n").length);
+        console.log("claimGroup", claimGroup);
+        console.log("size", claimGroup.addresses.split("\n").length);
 
         const userAddr = computeAddress(
           SigningKey.recoverPublicKey(
@@ -354,34 +551,8 @@ function GetBadgeButton({
 
         console.log("userAddr", userAddr);
 
-        const poseidon = new Poseidon();
-        await poseidon.initWasm();
-        const treeDepth = 20; // Provided circuits have tree depth = 20
-
         const startMs = Date.now();
-        const addrs: string[] = JSON.parse(preBadge.addresses);
-        const addrPaths: string[][] = JSON.parse(preBadge.addrPaths);
-        const index = addrs.findIndex((addr) => addr === userAddr);
-
-        if (index === -1) {
-          alert("You can't get this badge.");
-          return;
-        }
-
-        // Manually constructed merkle proof object because browser slow,
-        // so we precalculate all the proofs from the server and send them to the client
-        const proof: MerkleProof = {
-          siblings: addrPaths[index].map((siblingHex) => [
-            BigInt("0x" + siblingHex),
-          ]),
-          pathIndices: index
-            .toString(2)
-            .padStart(treeDepth, "0")
-            .split("")
-            .map((bit) => (bit === "1" ? 1 : 0))
-            .reverse(), // little endian
-          root: BigInt("0x" + preBadge.rootHex),
-        };
+        const proof = getMerklePath(userAddr, claimGroup);
         console.log("Merkle proof", proof);
         const endMs = Date.now();
         console.log("Merkle proof time", endMs - startMs, "ms");
@@ -420,6 +591,36 @@ function GetBadgeButton({
       Get badges
     </button>
   );
+}
+
+function getMerklePath(
+  userAddr: string,
+  claimGroup: ClaimGroup
+): MerkleProof | null {
+  const addrs: string[] = JSON.parse(claimGroup.addresses);
+  const addrPaths: string[][] = JSON.parse(claimGroup.addrPaths);
+  const index = addrs.findIndex((addr) => addr === userAddr);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const treeDepth = 20; // Provided circuits have tree depth = 20
+
+  // Manually constructed merkle proof object because browser slow,
+  // so we precalculate all the proofs from the server and send them to the client
+  const path: MerkleProof = {
+    siblings: addrPaths[index].map((siblingHex) => [BigInt("0x" + siblingHex)]),
+    pathIndices: index
+      .toString(2)
+      .padStart(treeDepth, "0")
+      .split("")
+      .map((bit) => (bit === "1" ? 1 : 0))
+      .reverse(), // little endian
+    root: BigInt("0x" + claimGroup.rootHex),
+  };
+
+  return path;
 }
 
 const container = document.getElementById("root");

@@ -12,13 +12,14 @@
   "scripts": {
     "dev": "NODE_ENV=development concurrently \"yarn dev:server\" \"yarn dev:client\"",
     "dev:server": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "##dev:client": "tsup src/web/index.tsx --platform=browser --out-dir=www/dist --watch",
     "#dev:client": "esbuild src/web/index.tsx --bundle --outdir=www/dist --watch",
     "dev:client": "ts-node-dev build.ts",
     "build": "yarn prisma:generate && ts-node build.ts",
     "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "clean": "rm -rf dist && rm -rf www/dist"
+    "clean": "rm -rf dist && rm -rf www/dist && rm -rf node_modules"
   },
   "keywords": [],
   "author": "",
@@ -55,6 +56,7 @@
   "devDependencies": {
     "@types/json-bigint": "^1.0.1",
     "@types/react-dom": "^18.2.7",
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "tsup": "^7.2.0"
   }
 }

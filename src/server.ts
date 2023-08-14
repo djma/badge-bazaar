@@ -1,5 +1,5 @@
 import express from "express";
-import { Badge, PrismaClient } from "@prisma/client";
+import { ClaimGroup, PrismaClient } from "@prisma/client";
 import path from "path";
 import { usePassportPopupSetup } from "@pcd/passport-interface";
 
@@ -29,6 +29,12 @@ app.use(
     path.resolve(__dirname, isDevMode ? "../www/dist" : "../../www/dist")
   )
 );
+app.use(
+  "/public",
+  express.static(
+    path.resolve(__dirname, isDevMode ? "../www/public" : "../../www/public")
+  )
+);
 
 app.get("/", (req, res) => {
   res.sendFile(
@@ -48,21 +54,32 @@ app.get("/popup", (req, res) => {
   );
 });
 
-app.get("/badge", async (req, res) => {
-  const badge: Badge | null = req.query.id
-    ? await prisma.badge.findUnique({
+app.get("/claimGroup", async (req, res) => {
+  const badge: ClaimGroup | null = req.query.id
+    ? await prisma.claimGroup.findUnique({
         where: {
           id: parseInt(req.query.id as string),
         },
       })
     : req.query.name
-    ? await prisma.badge.findUnique({
+    ? await prisma.claimGroup.findUnique({
         where: {
           name: req.query.name as string,
         },
       })
     : null;
   res.json(badge);
+});
+
+app.get("/claimGroups", async (_req, res) => {
+  const claimGroups = await prisma.claimGroup.findMany({
+    select: {
+      id: true,
+      name: true,
+      rootHex: true,
+    },
+  });
+  res.json(claimGroups);
 });
 
 app.listen(port, () => {

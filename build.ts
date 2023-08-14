@@ -7,8 +7,18 @@ build({
   entryPoints: ["src/web/index.tsx", "src/web/popup.tsx"],
   bundle: true,
   outdir: "www/dist",
-  plugins: [polyfillNode()],
+  plugins: [
+    polyfillNode({
+      polyfills: {
+        // "fs/promises": true,
+        // fs: true,
+        // crypto: true,
+      },
+    }),
+  ],
   minify: isProd,
+  platform: "browser",
+  external: ["fs", "fs/promises"],
 });
 
 build({

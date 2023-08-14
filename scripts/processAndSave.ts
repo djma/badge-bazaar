@@ -41,7 +41,7 @@ export async function processAndSave(name: string, addresses: string[]) {
   const end = Date.now();
   console.log(`Time elapsed: ${end - start} ms`);
 
-  await prisma.badge.create({
+  await prisma.claimGroup.create({
     data: {
       name: name,
       rootHex: rootHex,

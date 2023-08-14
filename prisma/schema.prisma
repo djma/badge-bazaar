@@ -8,13 +8,46 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("PRISMA_DB_URL")
+
+  relationMode = "prisma"
 }
 
-model Badge {
+model ClaimGroup {
+  id           Int            @id @default(autoincrement())
+  createdAt    DateTime       @default(now())
+  name         String         @unique
+  rootHex      String         @unique
+  addresses    String         @db.LongText
+  addrPaths    String         @db.LongText
+  // publicKeys   String         @db.LongText
+  // pubKeyPaths  String         @db.LongText
+  MessageClaim MessageClaim[]
+}
+
+model Message {
+  id           Int            @id @default(autoincrement())
+  createdAt    DateTime       @default(now())
+  message      String
+  eip712       String
+  MessageClaim MessageClaim[]
+}
+
+model MessageClaim {
+  id        Int        @id @default(autoincrement())
+  createdAt DateTime   @default(now())
+  message   Message    @relation(fields: [messageId], references: [id])
+  messageId Int
+  claim     ClaimGroup @relation(fields: [claimId], references: [id])
+  claimId   Int
+  proof     String     @db.LongText
+
+  @@index([messageId])
+  @@index([claimId])
+}
+
+model AddressPublicKey {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  name      String   @unique
-  rootHex   String   @unique
-  addresses String   @db.LongText
-  addrPaths String   @db.LongText
+  address   String   @unique
+  publicKey String   @unique
 }
