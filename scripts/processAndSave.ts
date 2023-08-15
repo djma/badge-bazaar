@@ -2,8 +2,21 @@ import { PrismaClient } from "@prisma/client";
 import JSONBig from "json-bigint";
 import { Poseidon } from "@personaelabs/spartan-ecdsa";
 import Tree from "./tree";
+import AWS from "aws-sdk";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const prisma = new PrismaClient();
+
+const wasabiConfig = {
+  endpoint: "s3.wasabisys.com",
+  accessKeyId: process.env.WASABI_ACCESS_KEY,
+  secretAccessKey: process.env.WASABI_SECRET_KEY,
+};
+
+const s3 = new AWS.S3(wasabiConfig);
+const bucketName = "badge-bazaar";
 
 export async function processAndSave(name: string, addresses: string[]) {
   // log current milliseconds
@@ -46,12 +59,76 @@ export async function processAndSave(name: string, addresses: string[]) {
   const end = Date.now();
   console.log(`Time elapsed: ${end - start} ms`);
 
-  await prisma.claimGroup.create({
-    data: {
+  const addressesBlob = JSON.stringify(addresses);
+  const addrPathsBlob = JSON.stringify(addrPaths);
+
+  const addressesParams = {
+    Bucket: bucketName,
+    Key: `${rootHex}_addresses.json`,
+    Body: addressesBlob,
+  };
+
+  const addrPathsParams = {
+    Bucket: bucketName,
+    Key: `${rootHex}_addrPaths.json`,
+    Body: addrPathsBlob,
+  };
+
+  let addressesUri = "";
+  let addrPathsUri = "";
+
+  // Use Promise.all to wait for both uploads to complete
+  await Promise.all([
+    new Promise<void>((resolve, reject) => {
+      s3.upload(addressesParams, function (err, data) {
+        if (err) {
+          console.log("Error", err);
+          reject(err);
+        } else {
+          addressesUri = data.Location.toString();
+          console.log("Success", addressesUri);
+          resolve();
+        }
+      });
+    }),
+    new Promise<void>((resolve, reject) => {
+      s3.upload(addrPathsParams, function (err, data) {
+        if (err) {
+          console.log("Error", err);
+          reject(err);
+        } else {
+          addrPathsUri = data.Location.toString();
+          console.log("Success", addrPathsUri);
+          resolve();
+        }
+      });
+    }),
+  ]);
+
+  addressesUri = await s3.getSignedUrlPromise("getObject", {
+    Bucket: bucketName,
+    Key: `${rootHex}_addresses.json`,
+  });
+  console.log("Success", addressesUri);
+
+  addrPathsUri = await s3.getSignedUrlPromise("getObject", {
+    Bucket: bucketName,
+    Key: `${rootHex}_addrPaths.json`,
+  });
+  console.log("Success", addrPathsUri);
+
+  await prisma.claimGroup.upsert({
+    where: { rootHex: rootHex },
+    update: {
+      name: name,
+      addressesUri: addressesUri,
+      addrPathsUri: addrPathsUri,
+    },
+    create: {
       name: name,
       rootHex: rootHex,
-      addresses: JSON.stringify(addresses),
-      addrPaths: JSON.stringify(addrPaths),
+      addressesUri: addressesUri,
+      addrPathsUri: addrPathsUri,
     },
   });
 }

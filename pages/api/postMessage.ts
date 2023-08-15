@@ -1,12 +1,21 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
-import { ClaimGroup, Message, PrismaClient } from "@prisma/client";
-import {
-  MembershipVerifier,
-  PublicInput,
-  defaultAddressMembershipVConfig,
-} from "@personaelabs/spartan-ecdsa";
+import { Message, PrismaClient } from "@prisma/client";
+import { MembershipVerifier, PublicInput } from "@personaelabs/spartan-ecdsa";
 import { hashMessage } from "ethers";
+import AWS from "aws-sdk";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+const wasabiConfig = {
+  endpoint: "s3.wasabisys.com",
+  accessKeyId: process.env.WASABI_ACCESS_KEY,
+  secretAccessKey: process.env.WASABI_SECRET_KEY,
+};
+
+const s3 = new AWS.S3(wasabiConfig);
+const bucketName = "badge-bazaar";
 
 const prisma = new PrismaClient();
 
@@ -41,6 +50,8 @@ export default async function handler(
   const valid = await verifier.verify(proof, publicInputBuffer);
   console.log("valid", valid);
 
+  // TODO check validity
+
   const newMessage = await prisma.message.create({
     data: {
       message: message as string,
@@ -57,11 +68,31 @@ export default async function handler(
     },
   });
 
+  // Upload proof to wasabi
+  const proofUploadParams = {
+    Bucket: bucketName,
+    Key: `proofHex_${newMessage.id}_${claim.id}.txt`,
+    Body: proofHex,
+  };
+  await s3
+    .upload(proofUploadParams, (err, data) => {
+      if (err) {
+        console.log("error", err);
+      }
+      console.log("data", data);
+    })
+    .promise();
+  const proofUri = await s3.getSignedUrlPromise("getObject", {
+    Bucket: bucketName,
+    Key: `proofHex_${newMessage.id}_${claim.id}.txt`,
+    Expires: 60 * 60 * 24 * 7,
+  });
+
   await prisma.messageClaim.create({
     data: {
       messageId: newMessage.id,
       claimId: claim!.id,
-      proof: proofHex as string,
+      proofUri: proofUri,
     },
   });
 

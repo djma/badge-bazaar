@@ -274,7 +274,10 @@ function MessageBoard() {
     const claimGroup: ClaimGroup = await (
       await fetch(`/api/claimGroup?name=${selectedClaims[0].name}`)
     ).json();
-    const merklePath = getMerklePath(ethereum.selectedAddress, claimGroup);
+    const merklePath = await getMerklePath(
+      ethereum.selectedAddress,
+      claimGroup
+    );
     if (!merklePath) {
       alert("You don't have this badge " + selectedClaims[0].name);
       return;
@@ -432,12 +435,16 @@ function ConnectWalletButton() {
   );
 }
 
-function getMerklePath(
+function fetchJson(url: string) {
+  return fetch(url).then((res) => res.json());
+}
+
+async function getMerklePath(
   userAddr: string,
   claimGroup: ClaimGroup
-): MerkleProof | null {
-  const addrs: string[] = JSON.parse(claimGroup.addresses);
-  const addrPaths: string[][] = JSON.parse(claimGroup.addrPaths);
+): Promise<MerkleProof> | null {
+  const addrs: string[] = await fetchJson(claimGroup.addressesUri);
+  const addrPaths: string[][] = await fetchJson(claimGroup.addrPathsUri);
   const index = addrs.findIndex((addr) => addr === userAddr);
 
   if (index === -1) {
