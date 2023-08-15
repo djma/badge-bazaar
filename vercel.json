@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/postMessage": {
+      "includeFiles": ["public/addr_membership.circuit", "public/addr_membership.wasm"],
+      "runtime": "vercel-php@0.5.2"
+    }
+  }
+}
