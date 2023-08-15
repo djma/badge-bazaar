@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import JSONBig from "json-bigint";
 import { Poseidon } from "@personaelabs/spartan-ecdsa";
-import Tree from "../src/tree";
+import Tree from "./tree";
 
 const prisma = new PrismaClient();
 
@@ -31,7 +31,12 @@ export async function processAndSave(name: string, addresses: string[]) {
 
   // Manually constructed merkle proof object because browser slow,
   // so we precalculate all the proofs from the server and send them to the client
-  const addrPaths = [...Array(addresses.length).keys()].map((i) => {
+  const addrIndices = [];
+  for (let i = 0; i < addresses.length; i++) {
+    addrIndices.push(i);
+  }
+  // const addrPaths = [...Array(addresses.length).keys()].map((i) => {
+  const addrPaths = addrIndices.map((i) => {
     const proof = tree.createProof(i);
     return proof.siblings.map((s) => s[0].toString(16));
   });

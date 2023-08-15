@@ -23,11 +23,11 @@ import {
 } from "@pcd/semaphore-signature-pcd";
 import { ClaimGroup, Message } from "@prisma/client";
 import { SigningKey, computeAddress, ethers, hashMessage, id } from "ethers";
-import {
-  EthereumGroupPCD,
-  EthereumGroupPCDPackage,
-  GroupType,
-} from "@pcd/ethereum-group-pcd";
+// import {
+//   EthereumGroupPCD,
+//   EthereumGroupPCDPackage,
+//   GroupType,
+// } from "@pcd/ethereum-group-pcd";
 
 const PASSPORT_URL = "https://pcdpass.xyz/";
 const inter = Inter({ subsets: ["latin"] });
@@ -203,7 +203,7 @@ function PcdUI() {
         />
       </ol>
       <h2>4. Use badges</h2>
-      <AddBadgesForAction />
+      {/* <AddBadgesForAction /> */}
     </div>
   );
 }
@@ -493,78 +493,79 @@ function GetBadgeButton({
   pcdPassId,
   ethSignature,
 }: GetBadgeButtonProps) {
-  const [isListening, setIsListening] = React.useState(false);
+  return <button>Get badge</button>;
+  // const [isListening, setIsListening] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!isListening) return;
-    setIsListening(false);
-  }, [isListening]);
+  // React.useEffect(() => {
+  //   if (!isListening) return;
+  //   setIsListening(false);
+  // }, [isListening]);
 
-  const disabled = !pcdPassId || !ethSignature;
+  // const disabled = !pcdPassId || !ethSignature;
 
-  if (disabled) {
-    return <button disabled={true}>Get badge</button>;
-  }
+  // if (disabled) {
+  //   return <button disabled={true}>Get badge</button>;
+  // }
 
-  return (
-    <button
-      onClick={async () => {
-        const claimGroup: ClaimGroup = await (
-          await fetch(`/claimGroup?name=${claimGroupName}`)
-        ).json();
+  // return (
+  //   <button
+  //     onClick={async () => {
+  //       const claimGroup: ClaimGroup = await (
+  //         await fetch(`/claimGroup?name=${claimGroupName}`)
+  //       ).json();
 
-        console.log("claimGroup", claimGroup);
-        console.log("size", claimGroup.addresses.split("\n").length);
+  //       console.log("claimGroup", claimGroup);
+  //       console.log("size", claimGroup.addresses.split("\n").length);
 
-        const userAddr = computeAddress(
-          SigningKey.recoverPublicKey(
-            hashMessage(pcdPassId.claim.identityCommitment),
-            ethSignature!
-          )
-        ).toLowerCase();
+  //       const userAddr = computeAddress(
+  //         SigningKey.recoverPublicKey(
+  //           hashMessage(pcdPassId.claim.identityCommitment),
+  //           ethSignature!
+  //         )
+  //       ).toLowerCase();
 
-        console.log("userAddr", userAddr);
+  //       console.log("userAddr", userAddr);
 
-        const startMs = Date.now();
-        const proof = getMerklePath(userAddr, claimGroup);
-        console.log("Merkle proof", proof);
-        const endMs = Date.now();
-        console.log("Merkle proof time", endMs - startMs, "ms");
+  //       const startMs = Date.now();
+  //       const proof = getMerklePath(userAddr, claimGroup);
+  //       console.log("Merkle proof", proof);
+  //       const endMs = Date.now();
+  //       console.log("Merkle proof time", endMs - startMs, "ms");
 
-        const popupUrl = window.location.origin + "/popup";
-        const proofUrl = constructPassportPcdProveAndAddRequestUrl<
-          typeof EthereumGroupPCDPackage
-        >(PASSPORT_URL, popupUrl, EthereumGroupPCDPackage.name, {
-          identity: {
-            argumentType: ArgumentTypeName.PCD,
-            pcdType: SemaphoreIdentityPCDPackage.name,
-            value: undefined,
-            userProvided: true,
-            description:
-              "The Semaphore Identity which you are signing the message.",
-          },
-          groupType: {
-            argumentType: ArgumentTypeName.String,
-            value: GroupType.ADDRESS,
-          },
-          signatureOfIdentityCommitment: {
-            argumentType: ArgumentTypeName.String,
-            value: ethSignature,
-          },
-          merkleProof: {
-            argumentType: ArgumentTypeName.String,
-            value: JSONBig({ useNativeBigInt: true }).stringify(proof),
-          },
-        });
+  //       const popupUrl = window.location.origin + "/popup";
+  //       const proofUrl = constructPassportPcdProveAndAddRequestUrl<
+  //         typeof EthereumGroupPCDPackage
+  //       >(PASSPORT_URL, popupUrl, EthereumGroupPCDPackage.name, {
+  //         identity: {
+  //           argumentType: ArgumentTypeName.PCD,
+  //           pcdType: SemaphoreIdentityPCDPackage.name,
+  //           value: undefined,
+  //           userProvided: true,
+  //           description:
+  //             "The Semaphore Identity which you are signing the message.",
+  //         },
+  //         groupType: {
+  //           argumentType: ArgumentTypeName.String,
+  //           value: GroupType.ADDRESS,
+  //         },
+  //         signatureOfIdentityCommitment: {
+  //           argumentType: ArgumentTypeName.String,
+  //           value: ethSignature,
+  //         },
+  //         merkleProof: {
+  //           argumentType: ArgumentTypeName.String,
+  //           value: JSONBig({ useNativeBigInt: true }).stringify(proof),
+  //         },
+  //       });
 
-        // openPassportPopup(popupUrl, proofUrl);
-        const url = `/popup?proofUrl=${encodeURIComponent(proofUrl)}`;
-        window.open(url, "_blank", "width=360,height=480,top=100,popup");
-      }}
-    >
-      Get badges
-    </button>
-  );
+  //       // openPassportPopup(popupUrl, proofUrl);
+  //       const url = `/popup?proofUrl=${encodeURIComponent(proofUrl)}`;
+  //       window.open(url, "_blank", "width=360,height=480,top=100,popup");
+  //     }}
+  //   >
+  //     Get badge
+  //   </button>
+  // );
 }
 
 function ConnectPCDPassButton({
@@ -633,57 +634,57 @@ function ConnectPCDPassButton({
   }
 }
 
-function AddBadgesForAction() {
-  const [pcds, setPcds] = React.useState<EthereumGroupPCD[]>([]);
-  const [pcdStr] = usePassportPopupMessages();
-  const [isListening, setIsListening] = React.useState(false);
+// function AddBadgesForAction() {
+//   const [pcds, setPcds] = React.useState<EthereumGroupPCD[]>([]);
+//   const [pcdStr] = usePassportPopupMessages();
+//   const [isListening, setIsListening] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!pcdStr) return;
-    if (!isListening) return;
-    setIsListening(false);
+//   React.useEffect(() => {
+//     if (!pcdStr) return;
+//     if (!isListening) return;
+//     setIsListening(false);
 
-    const parsed = JSON.parse(pcdStr) as SerializedPCD;
-    if (parsed.type !== EthereumGroupPCDPackage.name) return;
-    EthereumGroupPCDPackage.deserialize(parsed.pcd).then(
-      (pcd: EthereumGroupPCD) => {
-        console.log("Got Ethereum Group PCD", pcd);
-        setPcds((prev) => [...prev, pcd]);
-      }
-    );
-  }, [isListening, pcdStr]);
+//     const parsed = JSON.parse(pcdStr) as SerializedPCD;
+//     if (parsed.type !== EthereumGroupPCDPackage.name) return;
+//     EthereumGroupPCDPackage.deserialize(parsed.pcd).then(
+//       (pcd: EthereumGroupPCD) => {
+//         console.log("Got Ethereum Group PCD", pcd);
+//         setPcds((prev) => [...prev, pcd]);
+//       }
+//     );
+//   }, [isListening, pcdStr]);
 
-  return (
-    <div>
-      <button
-        onClick={() => {
-          setIsListening(true);
-          const popupUrl = window.location.origin + "/popup";
-          const proofUrl = getWithoutProvingUrl(
-            PASSPORT_URL,
-            popupUrl,
-            EthereumGroupPCDPackage.name
-          );
+//   return (
+//     <div>
+//       <button
+//         onClick={() => {
+//           setIsListening(true);
+//           const popupUrl = window.location.origin + "/popup";
+//           const proofUrl = getWithoutProvingUrl(
+//             PASSPORT_URL,
+//             popupUrl,
+//             EthereumGroupPCDPackage.name
+//           );
 
-          // console.log("proofUrl", proofUrl);
+//           // console.log("proofUrl", proofUrl);
 
-          // const newLocal = encodeURIComponent(proofUrl);
-          // const url = `/popup?${newLocal}`;
-          const url = `${popupUrl}?proofUrl=${encodeURIComponent(proofUrl)}`;
-          window.open(url, "_blank", "width=360,height=480,top=100,popup");
-          // openPassportPopup(PASSPORT_URL, proofUrl);
-        }}
-      >
-        Add badges for action
-      </button>
-      <ul>
-        {pcds.map((pcd) => (
-          <li key={pcd.id}>
-            {pcd.claim.groupType}:{" "}
-            {pcd.claim.publicInput.circuitPubInput.merkleRoot.toString(16)}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+//           // const newLocal = encodeURIComponent(proofUrl);
+//           // const url = `/popup?${newLocal}`;
+//           const url = `${popupUrl}?proofUrl=${encodeURIComponent(proofUrl)}`;
+//           window.open(url, "_blank", "width=360,height=480,top=100,popup");
+//           // openPassportPopup(PASSPORT_URL, proofUrl);
+//         }}
+//       >
+//         Add badges for action
+//       </button>
+//       <ul>
+//         {pcds.map((pcd) => (
+//           <li key={pcd.id}>
+//             {pcd.claim.groupType}:{" "}
+//             {pcd.claim.publicInput.circuitPubInput.merkleRoot.toString(16)}
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
