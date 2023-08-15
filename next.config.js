@@ -5,6 +5,12 @@ const nextConfig = {
   webpack: config => {
     config.resolve.fallback = { fs: false };
     config.experiments = { asyncWebAssembly: true, layers: true };
+    config.module.rules.push({
+      include: /scripts/,
+      use: {
+        loader: "null-loader"
+      }
+    });
 
     return config;
   },
