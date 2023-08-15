@@ -25,3 +25,9 @@ export default async function handler(
     : null;
   res.status(200).json(badge);
 }
+
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+};
