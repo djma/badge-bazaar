@@ -22,8 +22,12 @@ const prisma = new PrismaClient();
 type Data = Message | null;
 
 const addrMembershipConfig = {
-  circuit: "public/addr_membership.circuit",
-  witnessGenWasm: "public/addr_membership.wasm",
+  circuit:
+    (process.env.NODE_ENV === "production" ? "" : "public/") +
+    "addr_membership.circuit",
+  witnessGenWasm:
+    (process.env.NODE_ENV === "production" ? "" : "public/") +
+    "addr_membership.wasm",
 };
 
 export default async function handler(

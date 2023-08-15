@@ -26,7 +26,8 @@
     "react-dom": "18.2.0",
     "typescript": "5.1.6",
     "prisma": "4.12.0",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "aws-sdk": "^2.1437.0"
   },
   "devDependencies": {
     "@types/libsodium-wrappers": "^0.7.10",
@@ -34,8 +35,7 @@
     "@types/pako": "^2.0.0",
     "@types/qr-image": "^3.2.6",
     "@types/styled-components": "^5.1.26",
-    "@types/uuid": "^9.0.2",
-    "aws-sdk": "^2.1437.0"
+    "@types/uuid": "^9.0.2"
   },
   "engines": {
     "node": ">=18 <19"

@@ -329,7 +329,7 @@ function MessageBoard() {
       <br />
       <button onClick={handleSign}>Sign</button>
       <br />
-      {signature && <p>Signature: {signature}</p>}
+      {signature && <p>Signature: ✓</p>}
       <br />
       <label htmlFor="claims">Claims:</label>
       <br />

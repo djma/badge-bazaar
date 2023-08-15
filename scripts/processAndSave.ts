@@ -108,12 +108,14 @@ export async function processAndSave(name: string, addresses: string[]) {
   addressesUri = await s3.getSignedUrlPromise("getObject", {
     Bucket: bucketName,
     Key: `${rootHex}_addresses.json`,
+    Expires: 60 * 60 * 24 * 7,
   });
   console.log("Success", addressesUri);
 
   addrPathsUri = await s3.getSignedUrlPromise("getObject", {
     Bucket: bucketName,
     Key: `${rootHex}_addrPaths.json`,
+    Expires: 60 * 60 * 24 * 7,
   });
   console.log("Success", addrPathsUri);
 
