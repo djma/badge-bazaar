@@ -6,9 +6,13 @@ import { hashMessage } from "ethers";
 import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
 
-console.log("dir", __dirname);
-console.log("files", fs.readdirSync(__dirname));
+console.log("dir", path.join(__dirname, ".."));
+console.log("files", fs.readdirSync(path.join(__dirname, "..")));
+
+console.log("dir", path.join(__dirname, "..", ".."));
+console.log("files", fs.readdirSync(path.join(__dirname, "..", "..")));
 
 dotenv.config();
 
