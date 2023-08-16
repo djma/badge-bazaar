@@ -7,6 +7,8 @@ import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
 import path from "path";
 
+console.log(new Date().toISOString());
+
 dotenv.config();
 
 const wasabiConfig = {
@@ -31,6 +33,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  console.log(new Date().toISOString());
   // console.log("req.body", req.body);
   const { message, proofHex, publicInputHex } = req.body;
 
@@ -45,13 +48,16 @@ export default async function handler(
   const msgHash = hashMessage(message as string);
   // console.log("msgHashes", msgHash, publicInput.msgHash.toString("hex"));
 
+  console.log(new Date().toISOString());
   // Init verifier
   const verifier = new MembershipVerifier(addrMembershipConfig);
   await verifier.initWasm();
+  console.log(new Date().toISOString());
   const valid = await verifier.verify(proof, publicInputBuffer);
   console.log("valid", valid);
 
   // TODO check validity
+  console.log(new Date().toISOString());
 
   const newMessage = await prisma.message.create({
     data: {
@@ -69,6 +75,7 @@ export default async function handler(
     },
   });
 
+  console.log(new Date().toISOString());
   // Upload proof to wasabi
   const proofUploadParams = {
     Bucket: bucketName,
@@ -88,6 +95,7 @@ export default async function handler(
     Key: `proofHex_${newMessage.id}_${claim.id}.txt`,
     Expires: 60 * 60 * 24 * 7,
   });
+  console.log(new Date().toISOString());
 
   await prisma.messageClaim.create({
     data: {
@@ -96,6 +104,7 @@ export default async function handler(
       proofUri: proofUri,
     },
   });
+  console.log(new Date().toISOString());
 
   res.status(200).json(newMessage);
 }
