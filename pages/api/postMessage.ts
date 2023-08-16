@@ -8,11 +8,8 @@ import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-console.log("dir", path.join(__dirname, ".."));
-console.log("files", fs.readdirSync(path.join(__dirname, "..")));
-
-console.log("dir", path.join(__dirname, "..", ".."));
-console.log("files", fs.readdirSync(path.join(__dirname, "..", "..")));
+console.log(fs.readdirSync(process.cwd()));
+console.log(fs.readdirSync(path.join(process.cwd(), "public")));
 
 dotenv.config();
 
