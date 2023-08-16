@@ -34,19 +34,19 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  console.log("req.body", req.body);
+  // console.log("req.body", req.body);
   const { message, proofHex, publicInputHex } = req.body;
 
   const publicInputBuffer = Buffer.from(publicInputHex as string, "hex");
   const publicInput = PublicInput.deserialize(publicInputBuffer);
-  console.log("publicInput", publicInput);
+  // console.log("publicInput", publicInput);
   const proof = Buffer.from(proofHex as string, "hex");
 
   const rootHex = publicInput.circuitPubInput.merkleRoot.toString(16);
-  console.log("rootHex", rootHex);
+  // console.log("rootHex", rootHex);
 
   const msgHash = hashMessage(message as string);
-  console.log("msgHashes", msgHash, publicInput.msgHash.toString("hex"));
+  // console.log("msgHashes", msgHash, publicInput.msgHash.toString("hex"));
 
   // Init verifier
   const verifier = new MembershipVerifier(addrMembershipConfig);
