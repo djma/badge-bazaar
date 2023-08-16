@@ -1,8 +1,7 @@
 {
   "functions": {
     "api/postMessage.ts": {
-      "includeFiles": "public/addr_membership.*",
-      "runtime": "nodejs18.x"
+      "includeFiles": "public/addr_membership.*"
     }
   }
 }
