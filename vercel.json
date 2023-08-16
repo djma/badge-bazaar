@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/postMessage.ts": {
+    "pages/api/postMessage.ts": {
       "includeFiles": "public/addr_membership.*"
     }
   }
