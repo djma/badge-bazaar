@@ -21,6 +21,7 @@ const bucketName = "badge-bazaar";
 const prisma = new PrismaClient();
 
 type Data = Message | null;
+type Error = any;
 
 const addrMembershipConfig = {
   circuit: path.join(process.cwd(), "public", "addr_membership.circuit"),
@@ -29,21 +30,17 @@ const addrMembershipConfig = {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data | Error>
 ) {
-  // console.log("req.body", req.body);
   const { message, proofHex, publicInputHex } = req.body;
 
   const publicInputBuffer = Buffer.from(publicInputHex as string, "hex");
   const publicInput = PublicInput.deserialize(publicInputBuffer);
-  // console.log("publicInput", publicInput);
   const proof = Buffer.from(proofHex as string, "hex");
 
   const rootHex = publicInput.circuitPubInput.merkleRoot.toString(16);
-  // console.log("rootHex", rootHex);
 
   const msgHash = hashMessage(message as string);
-  // console.log("msgHashes", msgHash, publicInput.msgHash.toString("hex"));
 
   // Init verifier
   const verifier = new MembershipVerifier(addrMembershipConfig);
@@ -52,6 +49,14 @@ export default async function handler(
   console.log("valid", valid);
 
   // TODO check validity
+  if (!valid) {
+    res.status(400).json({ error: "Invalid proof" });
+    return;
+  }
+  if (msgHash.slice(2) !== publicInput.msgHash.toString("hex")) {
+    res.status(400).json({ error: "Message does not match signature" });
+    return;
+  }
 
   const newMessage = await prisma.message.create({
     data: {
