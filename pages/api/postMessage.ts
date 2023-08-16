@@ -5,11 +5,7 @@ import { MembershipVerifier, PublicInput } from "@personaelabs/spartan-ecdsa";
 import { hashMessage } from "ethers";
 import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
-import fs from "fs";
 import path from "path";
-
-console.log(fs.readdirSync(process.cwd()));
-console.log(fs.readdirSync(path.join(process.cwd(), "public")));
 
 dotenv.config();
 
@@ -27,8 +23,8 @@ const prisma = new PrismaClient();
 type Data = Message | null;
 
 const addrMembershipConfig = {
-  circuit: "public/addr_membership.circuit",
-  witnessGenWasm: "public/addr_membership.wasm",
+  circuit: path.join(process.cwd(), "public", "addr_membership.circuit"),
+  witnessGenWasm: path.join(process.cwd(), "public", "addr_membership.wasm"),
 };
 
 export default async function handler(
