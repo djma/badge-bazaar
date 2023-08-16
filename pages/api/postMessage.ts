@@ -5,6 +5,10 @@ import { MembershipVerifier, PublicInput } from "@personaelabs/spartan-ecdsa";
 import { hashMessage } from "ethers";
 import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
+import fs from "fs";
+
+console.log("dir", __dirname);
+console.log("files", fs.readdirSync(__dirname));
 
 dotenv.config();
 
