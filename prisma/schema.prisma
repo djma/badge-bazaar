@@ -16,7 +16,8 @@ model ClaimGroup {
   id           Int            @id @default(autoincrement())
   createdAt    DateTime       @default(now())
   name         String         @unique
-  rootHex      String         @unique
+  size         Int
+  rootHex      String
   addressesUri String         @db.VarChar(1024)
   addrPathsUri String         @db.VarChar(1024)
   // publicKeys   String         @db.LongText

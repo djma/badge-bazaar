@@ -23,7 +23,7 @@ export async function processAndSave(name: string, addresses: string[]) {
   const start = Date.now();
   console.log(Date.now());
 
-  addresses = addresses.map((a) => a.toLowerCase()).sort();
+  addresses = [...new Set(addresses)].map((a) => a.toLowerCase()).sort();
 
   const poseidon = new Poseidon();
   await poseidon.initWasm();
@@ -120,15 +120,17 @@ export async function processAndSave(name: string, addresses: string[]) {
   console.log("Success", addrPathsUri);
 
   await prisma.claimGroup.upsert({
-    where: { rootHex: rootHex },
+    where: { name: name },
     update: {
-      name: name,
+      rootHex: rootHex,
+      size: addresses.length,
       addressesUri: addressesUri,
       addrPathsUri: addrPathsUri,
     },
     create: {
       name: name,
       rootHex: rootHex,
+      size: addresses.length,
       addressesUri: addressesUri,
       addrPathsUri: addrPathsUri,
     },

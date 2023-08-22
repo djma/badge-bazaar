@@ -42,19 +42,19 @@ export default async function handler(
 
   const msgHash = hashMessage(message as string);
 
+  if (msgHash.slice(2) !== publicInput.msgHash.toString("hex")) {
+    res.status(400).json({ error: "Message does not match signature" });
+    return;
+  }
+
   // Init verifier
   const verifier = new MembershipVerifier(addrMembershipConfig);
   await verifier.initWasm();
   const valid = await verifier.verify(proof, publicInputBuffer);
   console.log("valid", valid);
 
-  // TODO check validity
   if (!valid) {
     res.status(400).json({ error: "Invalid proof" });
-    return;
-  }
-  if (msgHash.slice(2) !== publicInput.msgHash.toString("hex")) {
-    res.status(400).json({ error: "Message does not match signature" });
     return;
   }
 
