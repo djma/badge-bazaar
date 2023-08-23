@@ -16,14 +16,16 @@ import {
   ProverConfig,
   PublicInput,
   defaultAddressMembershipPConfig,
+  defaultPubkeyMembershipPConfig,
 } from "@personaelabs/spartan-ecdsa";
 import {
   SemaphoreSignaturePCD,
   SemaphoreSignaturePCDPackage,
 } from "@pcd/semaphore-signature-pcd";
-import { ClaimGroup, Message } from "@prisma/client";
+import { ClaimGroup, ClaimType, Message } from "@prisma/client";
 import { SigningKey, computeAddress, ethers, hashMessage, id } from "ethers";
 import { getPubKeyDBCache } from "@/common/pubkey";
+import { PostMessageRequest } from "./api/postMessage";
 // import {
 //   EthereumGroupPCD,
 //   EthereumGroupPCDPackage,
@@ -274,10 +276,23 @@ function MessageBoard() {
     const claimGroup: ClaimGroup = await (
       await fetch(`/api/claimGroup?name=${selectedClaims[0].name}`)
     ).json();
-    const merklePath = await getMerklePath(
-      ethereum.selectedAddress,
-      claimGroup
+
+    let addrOrPubKey: ClaimType = "PUBKEY";
+    let merklePath = await getMerklePath(
+      await getPubKeyDBCache(ethereum.selectedAddress),
+      claimGroup.pubKeysUri,
+      claimGroup.pubKeysPathsUri,
+      claimGroup.pubKeysRootHex
     );
+    if (!merklePath) {
+      addrOrPubKey = "ADDRESS";
+      merklePath = await getMerklePath(
+        ethereum.selectedAddress,
+        claimGroup.addressesUri,
+        claimGroup.addrPathsUri,
+        claimGroup.rootHex
+      );
+    }
     if (!merklePath) {
       alert("You don't have this badge " + selectedClaims[0].name);
       return;
@@ -285,7 +300,11 @@ function MessageBoard() {
 
     const msgHash = hashMessage(Buffer.from(message));
     const msgHashBuffer = Buffer.from(msgHash.slice(2), "hex");
-    const prover = new MembershipProver(defaultAddressMembershipPConfig);
+    const prover = new MembershipProver(
+      addrOrPubKey === "PUBKEY"
+        ? defaultPubkeyMembershipPConfig
+        : defaultAddressMembershipPConfig
+    );
     await prover.initWasm();
     const nizk = await prover.prove(signature!, msgHashBuffer, merklePath);
     const publicInputHex = Buffer.from(nizk.publicInput.serialize()).toString(
@@ -304,7 +323,8 @@ function MessageBoard() {
         message,
         proofHex,
         publicInputHex,
-      }),
+        addrOrPubKey,
+      } as PostMessageRequest),
     });
     await fetchMessages();
   };
@@ -437,20 +457,18 @@ function fetchJson(url: string) {
 }
 
 async function getMerklePath(
-  userAddr: string,
-  claimGroup: ClaimGroup
+  id: string,
+  idsUri: string,
+  idsPathsUri: string,
+  idsRootHex: string
 ): Promise<MerkleProof> | null {
-  const pubKeys: string[] = await fetchJson(claimGroup.pubKeysUri);
-  const userPubkey = await getPubKeyDBCache(userAddr);
-  const pubKeyIndex = pubKeys.findIndex((pk) => pk === userPubkey);
-
-  const addrs: string[] = await fetchJson(claimGroup.addressesUri);
-  const index = addrs.findIndex((addr) => addr === userAddr);
+  const addrs: string[] = await fetchJson(idsUri);
+  const index = addrs.findIndex((addr) => addr === id);
   if (index === -1) {
     return null;
   }
 
-  const addrPaths: string[][] = await fetchJson(claimGroup.addrPathsUri);
+  const addrPaths: string[][] = await fetchJson(idsPathsUri);
 
   const treeDepth = 20; // Provided circuits have tree depth = 20
 
@@ -464,7 +482,7 @@ async function getMerklePath(
       .split("")
       .map((bit) => (bit === "1" ? 1 : 0))
       .reverse(), // little endian
-    root: BigInt("0x" + claimGroup.rootHex),
+    root: BigInt("0x" + idsRootHex),
   };
 
   return path;

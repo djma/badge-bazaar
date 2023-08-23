@@ -38,6 +38,11 @@ model Message {
   MessageClaim MessageClaim[]
 }
 
+enum ClaimType {
+  ADDRESS
+  PUBKEY
+}
+
 model MessageClaim {
   id        Int        @id @default(autoincrement())
   createdAt DateTime   @default(now())
@@ -46,6 +51,7 @@ model MessageClaim {
   claim     ClaimGroup @relation(fields: [claimId], references: [id])
   claimId   Int
   proofUri  String     @db.VarChar(1024)
+  claimType ClaimType
 
   @@index([messageId])
   @@index([claimId])

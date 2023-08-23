@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Message, PrismaClient } from "@prisma/client";
+import { ClaimType, Message, PrismaClient } from "@prisma/client";
 import { MembershipVerifier, PublicInput } from "@personaelabs/spartan-ecdsa";
 import { hashMessage } from "ethers";
 import AWS from "aws-sdk";
@@ -27,12 +27,23 @@ const addrMembershipConfig = {
   circuit: path.join(process.cwd(), "public", "addr_membership.circuit"),
   witnessGenWasm: path.join(process.cwd(), "public", "addr_membership.wasm"),
 };
+const pubkeyMembershipConfig = {
+  circuit: path.join(process.cwd(), "public", "pubkey_membership.circuit"),
+  witnessGenWasm: path.join(process.cwd(), "public", "pubkey_membership.wasm"),
+};
+
+export interface PostMessageRequest {
+  message: string;
+  proofHex: string;
+  publicInputHex: string;
+  addrOrPubKey: ClaimType;
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data | Error>
 ) {
-  const { message, proofHex, publicInputHex } = req.body;
+  const { message, proofHex, publicInputHex, addrOrPubKey } = req.body;
 
   const publicInputBuffer = Buffer.from(publicInputHex as string, "hex");
   const publicInput = PublicInput.deserialize(publicInputBuffer);
@@ -48,7 +59,9 @@ export default async function handler(
   }
 
   // Init verifier
-  const verifier = new MembershipVerifier(addrMembershipConfig);
+  const verifier = new MembershipVerifier(
+    addrOrPubKey === "pubkey" ? pubkeyMembershipConfig : addrMembershipConfig
+  );
   await verifier.initWasm();
   const valid = await verifier.verify(proof, publicInputBuffer);
   console.log("valid", valid);
@@ -65,14 +78,24 @@ export default async function handler(
     },
   });
 
-  const claim = await prisma.claimGroup.findFirst({
-    where: {
-      rootHex,
-    },
-    select: {
-      id: true,
-    },
-  });
+  const claim =
+    addrOrPubKey === "pubkey"
+      ? await prisma.claimGroup.findFirst({
+          where: {
+            pubKeysRootHex: rootHex,
+          },
+          select: {
+            id: true,
+          },
+        })
+      : await prisma.claimGroup.findFirst({
+          where: {
+            rootHex,
+          },
+          select: {
+            id: true,
+          },
+        });
 
   // Upload proof to wasabi
   const proofUploadParams = {
@@ -99,6 +122,7 @@ export default async function handler(
       messageId: newMessage.id,
       claimId: claim!.id,
       proofUri: proofUri,
+      claimType: addrOrPubKey,
     },
   });
 
