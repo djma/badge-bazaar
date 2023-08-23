@@ -278,8 +278,13 @@ function MessageBoard() {
     ).json();
 
     let addrOrPubKey: ClaimType = "PUBKEY";
+    const pubkey = await fetch(
+      `/api/addrToPubkey?addr=${ethereum.selectedAddress}`
+    )
+      .then((res) => res.json())
+      .then((data) => data.pubkey);
     let merklePath = await getMerklePath(
-      await getPubKeyDBCache(ethereum.selectedAddress),
+      pubkey,
       claimGroup.pubKeysUri,
       claimGroup.pubKeysPathsUri,
       claimGroup.pubKeysRootHex
@@ -462,6 +467,9 @@ async function getMerklePath(
   idsPathsUri: string,
   idsRootHex: string
 ): Promise<MerkleProof> | null {
+  if (!id) {
+    return null;
+  }
   const addrs: string[] = await fetchJson(idsUri);
   const index = addrs.findIndex((addr) => addr === id);
   if (index === -1) {

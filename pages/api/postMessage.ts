@@ -43,7 +43,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data | Error>
 ) {
-  const { message, proofHex, publicInputHex, addrOrPubKey } = req.body;
+  const {
+    message,
+    proofHex,
+    publicInputHex,
+    addrOrPubKey,
+  }: PostMessageRequest = req.body;
 
   const publicInputBuffer = Buffer.from(publicInputHex as string, "hex");
   const publicInput = PublicInput.deserialize(publicInputBuffer);
@@ -60,7 +65,7 @@ export default async function handler(
 
   // Init verifier
   const verifier = new MembershipVerifier(
-    addrOrPubKey === "pubkey" ? pubkeyMembershipConfig : addrMembershipConfig
+    addrOrPubKey === "PUBKEY" ? pubkeyMembershipConfig : addrMembershipConfig
   );
   await verifier.initWasm();
   const valid = await verifier.verify(proof, publicInputBuffer);
@@ -79,7 +84,7 @@ export default async function handler(
   });
 
   const claim =
-    addrOrPubKey === "pubkey"
+    addrOrPubKey === "PUBKEY"
       ? await prisma.claimGroup.findFirst({
           where: {
             pubKeysRootHex: rootHex,

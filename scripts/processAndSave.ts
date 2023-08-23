@@ -4,6 +4,7 @@ import { Poseidon } from "@personaelabs/spartan-ecdsa";
 import Tree from "./tree";
 import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
+import { getRawPubKeyBuffer } from "../common/pubkey";
 
 dotenv.config();
 
@@ -94,7 +95,7 @@ export async function processAndSave(name: string, addresses: string[]) {
   const pubkeyTree = new Tree(
     treeDepth,
     poseidon,
-    pubkeys.map((a) => poseidon.hashPubKey(Buffer.from(a.slice(2), "hex")))
+    pubkeys.map((a) => poseidon.hashPubKey(getRawPubKeyBuffer(a)))
   );
   const pubkeyRoot = pubkeyTree.root();
   const pubkeyRootHex = pubkeyRoot.toString(16);

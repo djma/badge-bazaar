@@ -16,6 +16,25 @@ const config = {
 };
 const alchemy = new Alchemy(config);
 
+/**
+ * Utility function to get the raw public key buffer from a hex string.
+ *
+ * The offset that the hex representation of the public key starts at, without the 0x prefix and without the 04 encoding prefix. That's what the spartan-ecdsa circuit expects.
+ *
+ * https://github.com/indutny/elliptic/issues/86
+ *
+ * https://dev.to/q9/finally-understanding-ethereum-accounts-1kpe
+ */
+export function getRawPubKeyBuffer(pubKey: string): Buffer {
+  if (pubKey.length !== 132) {
+    throw new Error(
+      `invalid public key length ${pubKey.length}. Expected 130 (hex string)`
+    );
+  }
+  const hexPubkeyOffset = 2 + 2;
+  return Buffer.from(pubKey.slice(hexPubkeyOffset), "hex");
+}
+
 export async function getPubKeyDBCache(address: string) {
   const addrPubkey = await prisma.addressPublicKey.findUnique({
     where: {
