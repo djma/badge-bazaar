@@ -23,6 +23,7 @@ import {
 } from "@pcd/semaphore-signature-pcd";
 import { ClaimGroup, Message } from "@prisma/client";
 import { SigningKey, computeAddress, ethers, hashMessage, id } from "ethers";
+import { getPubKeyDBCache } from "@/common/pubkey";
 // import {
 //   EthereumGroupPCD,
 //   EthereumGroupPCDPackage,
@@ -439,13 +440,17 @@ async function getMerklePath(
   userAddr: string,
   claimGroup: ClaimGroup
 ): Promise<MerkleProof> | null {
-  const addrs: string[] = await fetchJson(claimGroup.addressesUri);
-  const addrPaths: string[][] = await fetchJson(claimGroup.addrPathsUri);
-  const index = addrs.findIndex((addr) => addr === userAddr);
+  const pubKeys: string[] = await fetchJson(claimGroup.pubKeysUri);
+  const userPubkey = await getPubKeyDBCache(userAddr);
+  const pubKeyIndex = pubKeys.findIndex((pk) => pk === userPubkey);
 
+  const addrs: string[] = await fetchJson(claimGroup.addressesUri);
+  const index = addrs.findIndex((addr) => addr === userAddr);
   if (index === -1) {
     return null;
   }
+
+  const addrPaths: string[][] = await fetchJson(claimGroup.addrPathsUri);
 
   const treeDepth = 20; // Provided circuits have tree depth = 20
 

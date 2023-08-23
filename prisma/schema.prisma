@@ -13,15 +13,20 @@ datasource db {
 }
 
 model ClaimGroup {
-  id           Int            @id @default(autoincrement())
-  createdAt    DateTime       @default(now())
-  name         String         @unique
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  name      String   @unique
+
   size         Int
   rootHex      String
-  addressesUri String         @db.VarChar(1024)
-  addrPathsUri String         @db.VarChar(1024)
-  // publicKeys   String         @db.LongText
-  // pubKeyPaths  String         @db.LongText
+  addressesUri String @db.VarChar(1024)
+  addrPathsUri String @db.VarChar(1024)
+
+  pubKeysRootHex  String?
+  pubKeysSize     Int?
+  pubKeysUri      String? @db.VarChar(1024)
+  pubKeysPathsUri String? @db.VarChar(1024)
+
   MessageClaim MessageClaim[]
 }
 

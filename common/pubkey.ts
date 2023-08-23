@@ -1,14 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { ethers } from "ethers";
 import {
   Alchemy,
   AssetTransfersCategory,
-  Network,
   TransactionResponse,
+  Network,
 } from "alchemy-sdk";
 import * as dotenv from "dotenv";
-import { ethers } from "ethers";
-const prisma = new PrismaClient();
 
+const prisma = new PrismaClient();
 dotenv.config();
 const config = {
   apiKey: process.env.ALCHEMY_API_KEY,
@@ -16,7 +16,7 @@ const config = {
 };
 const alchemy = new Alchemy(config);
 
-async function getPubKeyDBCache(address: string) {
+export async function getPubKeyDBCache(address: string) {
   const addrPubkey = await prisma.addressPublicKey.findUnique({
     where: {
       address: address,
@@ -60,10 +60,17 @@ async function getPubKeyFromTxn(address: string) {
 
   const txn = await alchemy.core.getTransaction(transfer.hash);
 
-  const pubkey = ethers.SigningKey.recoverPublicKey(
-    Buffer.from(getMsgHashFromTxn(txn).slice(2), "hex"),
-    { r: txn.r, s: txn.s, v: txn.v }
-  );
+  let pubkey;
+  try {
+    pubkey = ethers.SigningKey.recoverPublicKey(
+      Buffer.from(getMsgHashFromTxn(txn).slice(2), "hex"),
+      { r: txn.r, s: txn.s, v: txn.v }
+    );
+  } catch (e) {
+    // Non canonical s: https://github.com/ethers-io/ethers.js/issues/4223
+    console.error("Error recovering pubkey", e);
+    return null;
+  }
 
   const addressFromPubkey = ethers.computeAddress(pubkey);
 
@@ -139,28 +146,3 @@ function getMsgHashFromTxn(tx: TransactionResponse) {
   }
   return msgHash;
 }
-
-async function cachePubKeys() {
-  const groups = await prisma.claimGroup.findMany({
-    where: {
-      OR: [
-        { name: "erc20-whale1M-latest" },
-        { name: "ethereumGenesis" },
-        { name: "all-tester" },
-      ],
-    },
-  });
-
-  for (const group of groups) {
-    const addrs: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
-    for (const addr of addrs) {
-      const pubkey = await getPubKeyDBCache(addr);
-      console.log(addr, pubkey);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-  }
-}
-
-cachePubKeys();
