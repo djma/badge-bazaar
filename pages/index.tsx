@@ -229,7 +229,6 @@ type MessageWithClaims = {
 function MessageBoard() {
   // Message to post
   const [message, setMessage] = React.useState("");
-  const [signature, setSignature] = React.useState<string | null>(null);
   const [selectedClaims, setSelectedClaims] = React.useState<ClaimGroup[]>([]);
   const [claimGroups, setClaimGroups] = React.useState<ClaimGroup[]>([]);
 
@@ -248,30 +247,14 @@ function MessageBoard() {
     fetchMessages();
   }, []);
 
-  React.useEffect(() => {
-    setSignature(null);
-  }, [message]);
-
-  const handleSign = () => {
-    const { ethereum } = window as any;
-    if (!ethereum) {
-      console.log("No ethereum");
-      return;
-    }
-
-    ethereum
-      .request({
-        method: "personal_sign",
-        params: [message, ethereum.selectedAddress],
-      })
-      .then((result: string) => {
-        setSignature(result);
-      });
-  };
-
   const handlePost = async () => {
     const { ethereum } = window as any;
     console.log("Selected claims:", selectedClaims);
+
+    const signature = await ethereum.request({
+      method: "personal_sign",
+      params: [message, ethereum.selectedAddress],
+    });
 
     const claimGroup: ClaimGroup = await (
       await fetch(`/api/claimGroup?name=${selectedClaims[0].name}`)
@@ -339,6 +322,25 @@ function MessageBoard() {
       <h2>1. Connect Ethereum Wallet</h2>
       <ConnectWalletButton />
       <h2>2. Post Message</h2>
+      <label htmlFor="claims">Claims:</label>
+      <br />
+      <select
+        id="claims"
+        onChange={(e) => {
+          const selectedClaimId = parseInt(e.target.value);
+          const selectedClaim = claimGroups.find(
+            (claimGroup) => selectedClaimId === claimGroup.id
+          );
+          setSelectedClaims([selectedClaim]);
+        }}
+      >
+        {claimGroups.map((claimGroup) => (
+          <option key={claimGroup.id} value={claimGroup.id}>
+            {claimGroup.name}
+          </option>
+        ))}
+      </select>
+      <br />
       <label htmlFor="message">Message:</label>
       <br />
       <textarea
@@ -349,56 +351,33 @@ function MessageBoard() {
         cols={50}
       />
       <br />
-      <button onClick={handleSign}>Sign</button>
-      <br />
-      {signature && <p>Signature: ✓</p>}
-      <br />
-      <label htmlFor="claims">Claims:</label>
-      <br />
-      <select
-        id="claims"
-        multiple
-        size={5}
-        onChange={(e) => {
-          const selectedClaimIds = Array.from(
-            e.target.selectedOptions,
-            (option) => parseInt(option.value)
-          );
-          const selectedClaims = claimGroups.filter((claimGroup) =>
-            selectedClaimIds.includes(claimGroup.id)
-          );
-          setSelectedClaims(selectedClaims);
-        }}
-      >
-        {claimGroups.map((claimGroup) => (
-          <option key={claimGroup.id} value={claimGroup.id}>
-            {claimGroup.name}
-          </option>
-        ))}
-      </select>
-      <br />
       <button
-        disabled={signature === null || selectedClaims.length === 0}
+        disabled={message.length === 0 || selectedClaims.length === 0}
         onClick={handlePost}
       >
         Post
       </button>
       <h2>3. Messages</h2>
-      <ul>
-        {messages.map((message) => (
-          <li key={message.id}>
-            <p>{message.message}</p>
-            <ul>
-              {message.MessageClaim.map((mc) => (
-                <div key={mc.id}>
-                  <li>{mc.claim.name}</li>
-                  <li> {message.createdAt.toString()}</li>
-                </div>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+      <table style={{ borderSpacing: "10px 0" }}>
+        <thead>
+          <tr>
+            <th>Created At</th>
+            <th style={{ paddingLeft: "10px" }}>Claim Name</th>
+            <th style={{ paddingLeft: "10px" }}>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {messages.map((message) =>
+            message.MessageClaim.map((mc) => (
+              <tr key={mc.id}>
+                <td>{new Date(message.createdAt).toLocaleString()}</td>
+                <td style={{ paddingLeft: "10px" }}>{mc.claim.name}</td>
+                <td style={{ paddingLeft: "10px" }}>{message.message}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -449,10 +428,9 @@ function ConnectWalletButton() {
             checked={showAddress}
             onChange={(e) => setShowAddress(e.target.checked)}
           />
-          Show address
+          Show address: {addressToDisplay}
         </label>
       )}
-      <p>Wallet address: {addressToDisplay}</p>
     </div>
   );
 }
