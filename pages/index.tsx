@@ -4,7 +4,6 @@ import {
   MembershipProver,
   MembershipVerifier,
   MerkleProof,
-  PublicInput,
   defaultAddressMembershipPConfig,
   defaultAddressMembershipVConfig,
   defaultPubkeyMembershipPConfig,
@@ -161,11 +160,37 @@ function MessageBoard() {
     const { ethereum } = window as any;
     console.log("Selected claims:", selectedClaims);
 
+    const msgToPost = message;
+
     const signature = await ethereum.request({
       method: "personal_sign",
-      params: [message, ethereum.selectedAddress],
+      params: [msgToPost, ethereum.selectedAddress],
     });
 
+    // Make it feel instant
+    setMessage("");
+    setMessages(
+      [
+        {
+          id: 0,
+          eip712: "",
+          message: msgToPost,
+          createdAt: new Date(),
+          MessageClaim: selectedClaims.map((claimGroup) => ({
+            id: 0,
+            claim: {
+              name: claimGroup.name,
+              rootHex: claimGroup.rootHex,
+            },
+            proofUri: "",
+            publicInputUri: "",
+            claimType: null,
+          })),
+        },
+      ].concat(messages)
+    );
+
+    // Heavy lifting starts
     const claimGroup: ClaimGroup = await (
       await fetch(`/api/claimGroup?name=${selectedClaims[0].name}`)
     ).json();
@@ -196,7 +221,7 @@ function MessageBoard() {
       return;
     }
 
-    const msgHash = hashMessage(Buffer.from(message));
+    const msgHash = hashMessage(Buffer.from(msgToPost));
     const msgHashBuffer = Buffer.from(msgHash.slice(2), "hex");
     const prover = new MembershipProver(
       addrOrPubKey === "PUBKEY"
@@ -224,6 +249,8 @@ function MessageBoard() {
         addrOrPubKey,
       } as PostMessageRequest),
     });
+    // Heavy lifting ends
+
     await fetchMessages();
   };
 
@@ -302,10 +329,13 @@ function MessageBoard() {
 
 function ProofCheckmark({ message }: { message: MessageWithClaims }) {
   const [isVerified, setIsVerified] = React.useState(null);
+  const isServerVerified = message.id > 0;
 
   return (
     <div id={message.id.toString()}>
-      {isVerified === null ? (
+      {!isServerVerified ? (
+        <div className="lds-dual-ring"></div>
+      ) : isVerified === null ? (
         <button title="Server verified" onClick={verifyProof}>
           {"✓"}
         </button>
