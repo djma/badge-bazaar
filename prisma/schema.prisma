@@ -44,14 +44,15 @@ enum ClaimType {
 }
 
 model MessageClaim {
-  id        Int        @id @default(autoincrement())
-  createdAt DateTime   @default(now())
-  message   Message    @relation(fields: [messageId], references: [id])
-  messageId Int
-  claim     ClaimGroup @relation(fields: [claimId], references: [id])
-  claimId   Int
-  proofUri  String     @db.VarChar(1024)
-  claimType ClaimType
+  id             Int        @id @default(autoincrement())
+  createdAt      DateTime   @default(now())
+  message        Message    @relation(fields: [messageId], references: [id])
+  messageId      Int
+  claim          ClaimGroup @relation(fields: [claimId], references: [id])
+  claimId        Int
+  proofUri       String     @db.VarChar(1024)
+  publicInputUri String     @db.VarChar(1024)
+  claimType      ClaimType
 
   @@index([messageId])
   @@index([claimId])

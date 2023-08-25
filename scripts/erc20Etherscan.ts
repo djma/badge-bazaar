@@ -224,6 +224,8 @@ async function sleep(ms: number) {
 async function main() {
   // await whaleHolder("wsteth", "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
   // await sleep(1000);
+  // await whaleHolder("wbtc", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599");
+  // await sleep(1000);
   // await whaleHolder("dai", "0x6b175474e89094c44da98b954eedeac495271d0f");
   // await sleep(1000);
   // await whaleHolder("steth", "0xae7ab96520de3a18e5e111b5eaab095312d7fe84");

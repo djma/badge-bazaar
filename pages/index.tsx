@@ -2,9 +2,13 @@ import Head from "next/head";
 import * as React from "react";
 import {
   MembershipProver,
+  MembershipVerifier,
   MerkleProof,
+  PublicInput,
   defaultAddressMembershipPConfig,
+  defaultAddressMembershipVConfig,
   defaultPubkeyMembershipPConfig,
+  defaultPubkeyMembershipVConfig,
 } from "@personaelabs/spartan-ecdsa";
 import { ClaimGroup, ClaimType, Message } from "@prisma/client";
 import { hashMessage } from "ethers";
@@ -89,7 +93,7 @@ function Tabs() {
       <Pipe />
       <a href="#message-board">Message Board</a>
       <Pipe />
-      <a href="#pcd-ui">PCD UI</a>
+      PCD UI
       {content}
     </div>
   );
@@ -120,6 +124,9 @@ type MessageWithClaims = {
       name: string;
       rootHex: string;
     };
+    proofUri: string;
+    publicInputUri: string;
+    claimType: ClaimType;
   } & {
     id: number;
     // createdAt: Date;
@@ -267,26 +274,88 @@ function MessageBoard() {
             <th>Created At</th>
             <th style={{ paddingLeft: "10px" }}>Claim Name</th>
             <th style={{ paddingLeft: "10px" }}>Message</th>
+            <th style={{ paddingLeft: "10px" }}>Proof</th>
           </tr>
         </thead>
         <tbody>
-          {messages.map((message) =>
-            message.MessageClaim.map((mc) => (
-              <tr key={mc.id}>
-                <td>{new Date(message.createdAt).toLocaleString()}</td>
-                <td style={{ paddingLeft: "10px" }}>{mc.claim.name}</td>
-                <td style={{ paddingLeft: "10px" }}>{message.message}</td>
-              </tr>
-            ))
-          )}
+          {messages.map((message) => (
+            <tr key={message.id}>
+              <td>{new Date(message.createdAt).toLocaleString()}</td>
+              <td style={{ paddingLeft: "10px" }}>
+                {message.MessageClaim[0]?.claim.name}
+              </td>
+              <td style={{ paddingLeft: "10px" }}>{message.message}</td>
+              <td style={{ paddingLeft: "10px" }}>
+                {message.MessageClaim[0] ? (
+                  <ProofCheckmark message={message} />
+                ) : (
+                  ""
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
 }
 
-function fetchJson(url: string) {
+function ProofCheckmark({ message }: { message: MessageWithClaims }) {
+  const [isVerified, setIsVerified] = React.useState(null);
+
+  return (
+    <div id={message.id.toString()}>
+      {isVerified === null ? (
+        <button title="Server verified" onClick={verifyProof}>
+          {"✓"}
+        </button>
+      ) : isVerified ? (
+        <button
+          title="Client and server verified"
+          style={{ backgroundColor: "lightgreen" }}
+        >
+          {"✓"}
+        </button>
+      ) : (
+        <button
+          title="Client rejected"
+          style={{ backgroundColor: "lightcoral" }}
+        >
+          {"✗"}
+        </button>
+      )}
+    </div>
+  );
+
+  async function verifyProof() {
+    const proofHex = await fetchText(message.MessageClaim[0].proofUri);
+    const publicInputHex = await fetchText(
+      message.MessageClaim[0].publicInputUri
+    );
+    const publicInputBuffer = Buffer.from(publicInputHex, "hex");
+
+    // Init verifier
+    const verifier = new MembershipVerifier(
+      message.MessageClaim[0].claimType === "PUBKEY"
+        ? defaultPubkeyMembershipVConfig
+        : defaultAddressMembershipVConfig
+    );
+    await verifier.initWasm();
+    const valid = await verifier.verify(
+      Buffer.from(proofHex, "hex"),
+      publicInputBuffer
+    );
+
+    setIsVerified(valid);
+  }
+}
+
+async function fetchJson(url: string) {
   return fetch(url).then((res) => res.json());
+}
+async function fetchText(url: string) {
+  const res = await fetch(url);
+  return await res.text();
 }
 
 async function getMerklePath(

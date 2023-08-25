@@ -6,6 +6,7 @@ import { hashMessage } from "ethers";
 import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
 import path from "path";
+import upload from "@/common/uploadBlob";
 
 dotenv.config();
 
@@ -103,30 +104,19 @@ export default async function handler(
         });
 
   // Upload proof to wasabi
-  const proofUploadParams = {
-    Bucket: bucketName,
-    Key: `proofHex_${newMessage.id}_${claim.id}.txt`,
-    Body: proofHex,
-  };
-  await s3
-    .upload(proofUploadParams, (err, data) => {
-      if (err) {
-        console.log("error", err);
-      }
-      console.log("data", data);
-    })
-    .promise();
-  const proofUri = await s3.getSignedUrlPromise("getObject", {
-    Bucket: bucketName,
-    Key: `proofHex_${newMessage.id}_${claim.id}.txt`,
-    Expires: 60 * 60 * 24 * 7,
-  });
+  const proofKey = `proofHex_${newMessage.id}_${claim.id}.txt`;
+  const proofUri = await upload(proofKey, proofHex);
+
+  // Upload publicInput to wasabi
+  const publicInputKey = `publicInputHex_${newMessage.id}_${claim.id}.txt`;
+  const publicInputUri = await upload(publicInputKey, publicInputHex);
 
   await prisma.messageClaim.create({
     data: {
       messageId: newMessage.id,
       claimId: claim!.id,
       proofUri: proofUri,
+      publicInputUri: publicInputUri,
       claimType: addrOrPubKey,
     },
   });

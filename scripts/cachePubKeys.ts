@@ -8,8 +8,12 @@ async function cachePubKeys() {
     where: {
       OR: [
         // { name: "erc20-whale1M-latest" },
-        { name: "ethereumGenesis" },
-        { name: "all-tester" },
+        // { name: "ethereumGenesis" },
+        // { name: "all-tester" },
+        // { name: "nft-milady-20230823" },
+        // { name: "nft-pudgy-20230823" },
+        // { name: "nft-azuki-20230823" },
+        // { name: "nft-nouns-20230823" },
       ],
     },
   });
