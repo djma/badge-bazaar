@@ -14,6 +14,13 @@ import { hashMessage } from "ethers";
 import { PostMessageRequest } from "./api/postMessage";
 import { PcdUI } from "@/components/PcdUI";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
+import {
+  adjectives,
+  animals,
+  colors,
+  names,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
 
 export default function Home() {
   return (
@@ -138,7 +145,16 @@ type MessageWithClaims = {
 function MessageBoard() {
   // Message to post
   const [message, setMessage] = React.useState("");
-  const [selectedClaims, setSelectedClaims] = React.useState<ClaimGroup[]>([]);
+
+  const previousPseudonym =
+    localStorage.getItem("pseudonym") ??
+    uniqueNamesGenerator({
+      dictionaries: [adjectives, colors, animals],
+      separator: "-",
+    });
+  localStorage.setItem("pseudonym", previousPseudonym);
+  const [pseudonym, setPseudonym] = React.useState(previousPseudonym);
+  const [selectedClaim, setSelectedClaim] = React.useState<ClaimGroup>(null);
   const [claimGroups, setClaimGroups] = React.useState<ClaimGroup[]>([]);
 
   // Message board
@@ -158,9 +174,9 @@ function MessageBoard() {
 
   const handlePost = async () => {
     const { ethereum } = window as any;
-    console.log("Selected claims:", selectedClaims);
+    console.log("Selected claims:", selectedClaim);
 
-    const msgToPost = message;
+    const msgToPost = `${pseudonym}: ${message}`;
 
     const signature = await ethereum.request({
       method: "personal_sign",
@@ -176,23 +192,25 @@ function MessageBoard() {
           eip712: "",
           message: msgToPost,
           createdAt: new Date(),
-          MessageClaim: selectedClaims.map((claimGroup) => ({
-            id: 0,
-            claim: {
-              name: claimGroup.name,
-              rootHex: claimGroup.rootHex,
+          MessageClaim: [
+            {
+              id: 0,
+              claim: {
+                name: selectedClaim.name,
+                rootHex: selectedClaim.rootHex,
+              },
+              proofUri: "",
+              publicInputUri: "",
+              claimType: null,
             },
-            proofUri: "",
-            publicInputUri: "",
-            claimType: null,
-          })),
+          ],
         },
       ].concat(messages)
     );
 
     // Heavy lifting starts
     const claimGroup: ClaimGroup = await (
-      await fetch(`/api/claimGroup?name=${selectedClaims[0].name}`)
+      await fetch(`/api/claimGroup?name=${selectedClaim.name}`)
     ).json();
 
     let addrOrPubKey: ClaimType = "PUBKEY";
@@ -217,7 +235,7 @@ function MessageBoard() {
       );
     }
     if (!merklePath) {
-      alert("You don't have this badge " + selectedClaims[0].name);
+      alert("Your address isn't part of this group " + selectedClaim.name);
       return;
     }
 
@@ -243,7 +261,7 @@ function MessageBoard() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        message,
+        message: msgToPost,
         proofHex,
         publicInputHex,
         addrOrPubKey,
@@ -259,24 +277,18 @@ function MessageBoard() {
       <h2>1. Connect Ethereum Wallet</h2>
       <ConnectWalletButton />
       <h2>2. Post Message</h2>
-      <label htmlFor="claims">Claims:</label>
+      <label htmlFor="pseudonym">Pseudonym:</label>
       <br />
-      <select
-        id="claims"
+      <textarea
+        id="pseudonym"
+        value={pseudonym}
         onChange={(e) => {
-          const selectedClaimId = parseInt(e.target.value);
-          const selectedClaim = claimGroups.find(
-            (claimGroup) => selectedClaimId === claimGroup.id
-          );
-          setSelectedClaims([selectedClaim]);
+          localStorage.setItem("pseudonym", e.target.value);
+          setPseudonym(e.target.value);
         }}
-      >
-        {claimGroups.map((claimGroup) => (
-          <option key={claimGroup.id} value={claimGroup.id}>
-            {claimGroup.name}
-          </option>
-        ))}
-      </select>
+        rows={1}
+        cols={30}
+      />
       <br />
       <label htmlFor="message">Message:</label>
       <br />
@@ -288,8 +300,34 @@ function MessageBoard() {
         cols={50}
       />
       <br />
+      <label htmlFor="claims">Claims:</label>
+      <br />
+      <select
+        id="claims"
+        onChange={(e) => {
+          const selectedClaimId = parseInt(e.target.value);
+          const selectedClaim = claimGroups.find(
+            (claimGroup) => selectedClaimId === claimGroup.id
+          );
+          setSelectedClaim(selectedClaim);
+        }}
+      >
+        {[<option key={"empty-claim-group"} value={0}></option>].concat(
+          claimGroups.map((claimGroup) => (
+            <option key={claimGroup.id} value={claimGroup.id}>
+              {claimGroup.name}
+            </option>
+          ))
+        )}
+      </select>
+      <br />
       <button
-        disabled={message.length === 0 || selectedClaims.length === 0}
+        style={{ marginTop: "6px" }}
+        disabled={
+          message.length === 0 ||
+          selectedClaim == null ||
+          selectedClaim.id === 0
+        }
         onClick={handlePost}
       >
         Post
