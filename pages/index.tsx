@@ -278,6 +278,18 @@ function MessageBoard() {
       <ConnectWalletButton />
       <h2>2. Post Message</h2>
       <label htmlFor="pseudonym">Pseudonym:</label>
+      <button
+        onClick={() => {
+          const newPseudonym = uniqueNamesGenerator({
+            dictionaries: [adjectives, colors, animals],
+            separator: "-",
+          });
+          localStorage.setItem("pseudonym", newPseudonym);
+          setPseudonym(newPseudonym);
+        }}
+      >
+        ↻
+      </button>
       <br />
       <textarea
         id="pseudonym"
