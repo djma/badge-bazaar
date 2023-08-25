@@ -1,10 +1,7 @@
 import { BigNumber } from "alchemy-sdk";
-import { processAndSave as _processAndSave } from "./processAndSave";
+import { processAndSave } from "./processAndSave";
 import * as dotenv from "dotenv";
 import JSONBig from "json-bigint";
-import { Prisma, PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 dotenv.config();
 
@@ -93,7 +90,7 @@ async function top1000Holder(name: string, tokenAddr: string) {
     .slice(0, 1000);
 
   console.log(name + " got: ", top1000Owners.length);
-  await _processAndSave(
+  await processAndSave(
     `erc20-top1000-${name}-latest`,
     top1000Owners.map((e) => e.address)
   );
@@ -145,55 +142,14 @@ async function whaleHolder(name: string, tokenAddr: string) {
 
   console.log(name + " got: ", whale10MHolders.length + " whale10M");
   console.log(name + " got: ", whale1MHolders.length + " whale1M");
-  await _processAndSave(
+  await processAndSave(
     `erc20-whale10M-${name}-latest`,
     whale10MHolders.map((e) => e.address)
   );
-  await _processAndSave(
+  await processAndSave(
     `erc20-whale1M-${name}-latest`,
     whale1MHolders.map((e) => e.address)
   );
-}
-
-async function whaleCombined() {
-  let all10MHolders: string[] = [];
-  let all1MHolders: string[] = [];
-
-  const all10M = await prisma.claimGroup.findMany({
-    where: {
-      name: {
-        startsWith: "erc20-whale10M-",
-        endsWith: "-latest",
-      },
-    },
-  });
-  const all1M = await prisma.claimGroup.findMany({
-    where: {
-      name: {
-        startsWith: "erc20-whale1M-",
-        endsWith: "-latest",
-      },
-    },
-  });
-
-  for (const group of all10M) {
-    const addrs: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
-    all10MHolders = all10MHolders.concat(addrs);
-  }
-  for (const group of all1M) {
-    const addrs: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
-    all1MHolders = all1MHolders.concat(addrs);
-  }
-
-  console.log("all10M: ", all10MHolders.length);
-  console.log("all1M: ", all1MHolders.length);
-
-  await _processAndSave(`erc20-whale10M-latest`, all10MHolders);
-  await _processAndSave(`erc20-whale1M-latest`, all1MHolders);
 }
 
 interface TokenInfo {
@@ -224,8 +180,8 @@ async function sleep(ms: number) {
 async function main() {
   // await whaleHolder("wsteth", "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
   // await sleep(1000);
-  // await whaleHolder("wbtc", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599");
-  // await sleep(1000);
+  await whaleHolder("wbtc", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599");
+  await sleep(1000);
   // await whaleHolder("dai", "0x6b175474e89094c44da98b954eedeac495271d0f");
   // await sleep(1000);
   // await whaleHolder("steth", "0xae7ab96520de3a18e5e111b5eaab095312d7fe84");
@@ -236,9 +192,6 @@ async function main() {
   // await sleep(1000);
   // await whaleHolder("usdt", "0xdac17f958d2ee523a2206206994597c13d831ec7");
   // await sleep(1000);
-
-  await whaleCombined();
-
   // await top1000Holder("wsteth", "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
   // await sleep(1000);
   // await top1000Holder("steth", "0xae7ab96520de3a18e5e111b5eaab095312d7fe84");

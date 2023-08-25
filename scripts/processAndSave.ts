@@ -4,7 +4,7 @@ import { Poseidon } from "@personaelabs/spartan-ecdsa";
 import Tree from "./tree";
 import * as dotenv from "dotenv";
 import { getRawPubKeyBuffer } from "../common/pubkey";
-import upload from "@/common/uploadBlob";
+import upload from "../common/uploadBlob";
 
 dotenv.config();
 
