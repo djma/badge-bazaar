@@ -15,6 +15,26 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const claimGroups = await prisma.claimGroup.findMany({
+    where: {
+      OR: [
+        {
+          name: {
+            in: [
+              "ethereumGenesis",
+              "alliance-hot-wallet",
+              "whale10M-20230825",
+              "whale1M-20230825",
+              "debank-allRanked-20230825",
+            ],
+          },
+        },
+        {
+          name: {
+            startsWith: "nft-",
+          },
+        },
+      ],
+    },
     select: {
       id: true,
       name: true,
