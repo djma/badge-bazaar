@@ -10,14 +10,15 @@ async function cachePubKeys() {
   const groups = await prisma.claimGroup.findMany({
     where: {
       OR: [
-        { name: "whale10M-20230825" },
-        { name: "whale1M-20230825" },
+        // { name: "whale10M-20230825" },
+        // { name: "whale1M-20230825" },
         // { name: "ethereumGenesis" },
         // { name: "all-tester" },
-        // { name: "nft-milady-20230823" },
-        // { name: "nft-pudgy-20230823" },
-        // { name: "nft-azuki-20230823" },
-        // { name: "nft-nouns-20230823" },
+        {
+          name: {
+            startsWith: "nft-",
+          },
+        },
       ],
     },
   });

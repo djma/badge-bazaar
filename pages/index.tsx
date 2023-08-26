@@ -89,6 +89,8 @@ function Tabs() {
     content = <PcdUI />;
   } else if (currentTab === "message-board") {
     content = <MessageBoard />;
+  } else if (currentTab === "claim-descriptions") {
+    content = <ClaimDescriptions />;
   } else {
     content = <Welcome />;
   }
@@ -99,8 +101,37 @@ function Tabs() {
       <Pipe />
       <a href="#message-board">Message Board</a>
       <Pipe />
-      PCD UI
+      <a href="#claim-descriptions">Claims</a>
       {content}
+    </div>
+  );
+}
+
+function ClaimDescriptions() {
+  return (
+    <div>
+      <h1>Claim Descriptions</h1>
+      <h2>ethereumGenesis</h2>
+      <p>Was part of the original 8893 addresses that received genesis eth.</p>
+      <h2>debank-allRanked</h2>
+      <p>
+        Is among the top 10k ranked addresses on DeBank. This means they must
+        have connected their wallet at least once.
+      </p>
+      <h2>nft-***</h2>
+      <p> Owns at least one of the nft mentioned.</p>
+      <h2>whale-1M</h2>
+      <p> Owns at least 1M USD worth of assets by either: </p>
+      <ul>
+        <li>
+          Connecting to DeBank, and DeBank valuing their address above 1M USD
+        </li>
+        <li>
+          Holding at least 1M USD worth of dai, usdc, wbtc, weth, steth, or
+          wsteth.
+        </li>
+      </ul>
+      <p>Whale indexing to be improved.</p>
     </div>
   );
 }
@@ -349,7 +380,7 @@ function MessageBoard() {
         <thead>
           <tr>
             <th>Created At</th>
-            <th style={{ paddingLeft: "10px" }}>Claim Name</th>
+            <th style={{ paddingLeft: "10px" }}>Claim</th>
             <th style={{ paddingLeft: "10px" }}>Message</th>
             <th style={{ paddingLeft: "10px" }}>Proof</th>
           </tr>
