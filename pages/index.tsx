@@ -439,9 +439,19 @@ function ProofCheckmark({ message }: { message: MessageWithClaims }) {
   );
 
   async function verifyProof() {
-    const proofHex = await fetchText(message.MessageClaim[0].proofUri);
+    const proofHex = await fetchText(
+      (
+        await fetchJson(
+          `/api/refreshWasabiUri?url=${message.MessageClaim[0].proofUri}`
+        )
+      ).newUrl
+    );
     const publicInputHex = await fetchText(
-      message.MessageClaim[0].publicInputUri
+      (
+        await fetchJson(
+          `/api/refreshWasabiUri?url=${message.MessageClaim[0].publicInputUri}`
+        )
+      ).newUrl
     );
     const publicInputBuffer = Buffer.from(publicInputHex, "hex");
 

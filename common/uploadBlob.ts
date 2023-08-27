@@ -23,6 +23,19 @@ export default async function upload(key: string, body: string) {
     })
     .promise();
 
+  return refreshSignedUrl(key);
+}
+
+export async function refreshSignedUrl(key: string) {
+  // hacks
+  if (key.includes("?")) {
+    // it's not a key, it's a url of the form
+    // https://badge-bazaar.s3.wasabisys.com/key?params
+    key = key.split("?")[0];
+    const keySplit = key.split("/");
+    key = keySplit[keySplit.length - 1];
+  }
+
   const signedUrl = await s3.getSignedUrlPromise("getObject", {
     Bucket: bucketName,
     Key: key,
