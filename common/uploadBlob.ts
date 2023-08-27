@@ -41,7 +41,10 @@ export async function refreshSignedUrl(key: string) {
     Key: key,
     Expires: 60 * 60 * 24 * 7,
   });
-  console.log("Success", signedUrl);
+  console.log("SignedUrl: ", signedUrl);
 
-  return signedUrl;
+  // wtf am I doing?
+  const cleanedSignedUrl = signedUrl.split("%3D")[0] + "%3D";
+
+  return cleanedSignedUrl;
 }
