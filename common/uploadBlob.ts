@@ -48,3 +48,33 @@ export async function refreshSignedUrl(key: string) {
 
   return cleanedSignedUrl;
 }
+
+async function fetchJson(url: string) {
+  return fetch(url).then((res) => res.json());
+}
+async function fetchText(url: string) {
+  const res = await fetch(url);
+  return await res.text();
+}
+
+export async function fetchWasabiText(url: string) {
+  const refresh = await fetchJson(`/api/refreshWasabiUri?url=${url}`);
+  const res = await fetch(refresh.newUrl);
+  return res.text();
+}
+export async function fetchWasabiJson(url: string) {
+  const refresh = await fetchJson(`/api/refreshWasabiUri?url=${url}`);
+  const res = await fetch(refresh.newUrl);
+  return res.json();
+}
+
+export async function fetchWasabiTextNode(url: string) {
+  const newUrl = await refreshSignedUrl(url);
+  const res = await fetch(newUrl);
+  return res.text();
+}
+export async function fetchWasabiJsonNode(url: string) {
+  const newUrl = await refreshSignedUrl(url);
+  const res = await fetch(newUrl);
+  return res.json();
+}

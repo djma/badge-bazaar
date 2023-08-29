@@ -1,5 +1,6 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { processAndSave } from "./processAndSave";
+import { fetchWasabiJsonNode } from "../common/uploadBlob";
 
 const prisma = new PrismaClient();
 
@@ -23,25 +24,19 @@ async function mergeWhales() {
   });
 
   for (const group of all10M) {
-    const addrs: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
+    const addrs: string[] = await fetchWasabiJsonNode(group.addressesUri);
     all10MHolders = all10MHolders.concat(addrs);
   }
   for (const group of all1M) {
-    const addrs: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
+    const addrs: string[] = await fetchWasabiJsonNode(group.addressesUri);
     all1MHolders = all1MHolders.concat(addrs);
   }
 
   console.log("all10M: ", all10MHolders.length);
   console.log("all1M: ", all1MHolders.length);
 
-  const date = new Date().toISOString().split("T")[0];
-
-  await processAndSave(`whale10M-${date}`, all10MHolders);
-  await processAndSave(`whale1M-${date}`, all1MHolders);
+  await processAndSave(`whale10M`, all10MHolders);
+  await processAndSave(`whale1M`, all1MHolders);
 }
 
 mergeWhales();

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { getPubKeyDBCache, getRawPubKeyBuffer } from "../common/pubkey";
 import Tree from "./tree";
-import upload from "../common/uploadBlob";
+import upload, { fetchWasabiJson } from "../common/uploadBlob";
 import { Poseidon } from "@personaelabs/spartan-ecdsa";
 
 const prisma = new PrismaClient();
@@ -13,12 +13,12 @@ async function cachePubKeys() {
         // { name: "whale10M-20230825" },
         // { name: "whale1M-20230825" },
         // { name: "ethereumGenesis" },
-        // { name: "all-tester" },
-        {
-          name: {
-            startsWith: "nft-",
-          },
-        },
+        { name: "nft-milady-20230823" },
+        // {
+        //   name: {
+        //     startsWith: "nft-",
+        //   },
+        // },
       ],
     },
   });
@@ -28,10 +28,10 @@ async function cachePubKeys() {
   const treeDepth = 20;
 
   for (const group of groups) {
-    const addresses: string[] = await fetch(group.addressesUri).then((res) =>
-      res.json()
-    );
+    const addresses: string[] = await fetchWasabiJson(group.addressesUri);
     for (const addr of addresses) {
+      // if (addr < "0x87e") continue;
+
       const pubkey = await getPubKeyDBCache(addr);
       console.log(addr, pubkey);
       await new Promise((resolve) => setTimeout(resolve, 100));

@@ -21,6 +21,7 @@ import {
   names,
   uniqueNamesGenerator,
 } from "unique-names-generator";
+import { fetchWasabiJson, fetchWasabiText } from "../common/uploadBlob";
 
 export default function Home() {
   return (
@@ -482,19 +483,9 @@ function ProofCheckmark({ message }: { message: MessageWithClaims }) {
   );
 
   async function verifyProof() {
-    const proofHex = await fetchText(
-      (
-        await fetchJson(
-          `/api/refreshWasabiUri?url=${message.MessageClaim[0].proofUri}`
-        )
-      ).newUrl
-    );
-    const publicInputHex = await fetchText(
-      (
-        await fetchJson(
-          `/api/refreshWasabiUri?url=${message.MessageClaim[0].publicInputUri}`
-        )
-      ).newUrl
+    const proofHex = await fetchWasabiText(message.MessageClaim[0].proofUri);
+    const publicInputHex = await fetchWasabiText(
+      message.MessageClaim[0].publicInputUri
     );
     const publicInputBuffer = Buffer.from(publicInputHex, "hex");
 
@@ -514,14 +505,6 @@ function ProofCheckmark({ message }: { message: MessageWithClaims }) {
   }
 }
 
-async function fetchJson(url: string) {
-  return fetch(url).then((res) => res.json());
-}
-async function fetchText(url: string) {
-  const res = await fetch(url);
-  return await res.text();
-}
-
 async function getMerklePath(
   id: string,
   idsUri: string,
@@ -531,13 +514,13 @@ async function getMerklePath(
   if (!id) {
     return null;
   }
-  const addrs: string[] = await fetchJson(idsUri);
+  const addrs: string[] = await fetchWasabiJson(idsUri);
   const index = addrs.findIndex((addr) => addr === id);
   if (index === -1) {
     return null;
   }
 
-  const addrPaths: string[][] = await fetchJson(idsPathsUri);
+  const addrPaths: string[][] = await fetchWasabiJson(idsPathsUri);
 
   const treeDepth = 20; // Provided circuits have tree depth = 20
 
