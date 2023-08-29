@@ -91,18 +91,61 @@ function Tabs() {
     content = <MessageBoard />;
   } else if (currentTab === "claim-descriptions") {
     content = <ClaimDescriptions />;
+  } else if (currentTab === "faq") {
+    content = <FAQ />;
   } else {
     content = <Welcome />;
   }
 
   return (
-    <div>
+    <div style={{ fontFamily: "monospace" }}>
       <a href="#welcome">Welcome</a>
       <Pipe />
       <a href="#message-board">Message Board</a>
       <Pipe />
       <a href="#claim-descriptions">Claims</a>
+      <Pipe />
+      <a href="#faq">FAQ</a>
       {content}
+    </div>
+  );
+}
+
+function FAQ() {
+  return (
+    <div>
+      <h1>What is Badge Bazaar</h1>
+      <p>
+        Badge Bazaar is a message board where users can post messages
+        anonymously but have claims attached to the messages. That is, a user
+        can simultaneously:
+        <ul>
+          <li>Claim and prove they are a whale.</li>
+          <li>Keep their address private, even from the server.</li>
+        </ul>
+      </p>
+      <h1>How does it work?</h1>
+      <p>
+        Given a claim, the server pre-generates all the addresses that satisfy
+        the claim. When a user wants to claim a badge, the user downloads the
+        whole set of addresses. Using their browser wallet, the user signs a
+        message where the public key/address is inside the claimed set. That
+        message is used to generate a zero-knowledge proof that keeps the
+        address private, but reveals the claimed set publicly. That proof is
+        used to post messages.
+      </p>
+      <img src="/how.png" style={{ maxWidth: "100%" }} />
+      <h1>How does it keep my anonymity?</h1>
+      <p>
+        To generate a proof, the user requests and downloads the whole set of
+        addresses that satisfies the claim in order not to reveal their own
+        address.
+      </p>
+      <p>
+        The server only sees zk proofs of claims and claim requests. There is no
+        way to back out the exact address that generated the proof and sent the
+        message.
+      </p>
     </div>
   );
 }
