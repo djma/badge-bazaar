@@ -147,6 +147,16 @@ function FAQ() {
         way to back out the exact address that generated the proof and sent the
         message.
       </p>
+      <h1>What is the Proof column next to the messages?</h1>
+      <p>
+        The proof column shows a checkmark if the server has verified the proof
+        of the message.
+      </p>
+      <p>
+        The client can also independently verify the proof by clicking the
+        checkmark. If the client verifies the proof, the checkmark turns green.
+        If the client rejects the proof, the checkmark turns red.
+      </p>
     </div>
   );
 }
@@ -420,7 +430,9 @@ function MessageBoard() {
       >
         Post
       </button>
-      <h2>3. Messages</h2>
+      <br />
+      <br />
+      <br />
       <table style={{ borderSpacing: "10px 0" }}>
         <thead>
           <tr>
@@ -429,11 +441,22 @@ function MessageBoard() {
                 paddingLeft: "10px",
                 minWidth: "340px",
                 maxWidth: "340px",
+                borderBottom: "1px solid black",
               }}
             >
-              Message
+              Messages
             </th>
-            <th style={{ paddingLeft: "10px" }}>Proof</th>
+            <th
+              style={{
+                paddingLeft: "10px",
+                paddingRight: "10px",
+                minWidth: "40px",
+                maxWidth: "40px",
+                borderBottom: "1px solid black",
+              }}
+            >
+              <a href="/#faq">Proof</a>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -452,7 +475,6 @@ function MessageBoard() {
                 <td
                   style={{
                     paddingLeft: "10px",
-                    paddingBottom: "20px",
                     minWidth: "340px",
                     maxWidth: "340px",
                   }}
@@ -461,14 +483,21 @@ function MessageBoard() {
                     <div>
                       {msg}
                       <div style={{ textAlign: "right" }}>
-                        ~{username}
+                        <br />~{username}
                         <br />({claimName}){" "}
                       </div>
+                      <hr />
                     </div>
                   }
                 </td>
 
-                <td style={{ paddingLeft: "10px", paddingBottom: "20px" }}>
+                <td
+                  style={{
+                    paddingLeft: "10px",
+                    paddingRight: "10px",
+                    textAlign: "center",
+                  }}
+                >
                   {message.MessageClaim[0] ? (
                     <ProofCheckmark message={message} />
                   ) : (

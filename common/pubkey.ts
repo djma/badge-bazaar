@@ -48,6 +48,9 @@ export async function getPubKeyDBCache(
     return addrPubkeyRow.publicKey;
   }
 
+  // Mkae sure not to hit the rate limit on Alchemy
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
   if (await isContract(address)) {
     await prisma.addressPublicKey.create({
       data: {

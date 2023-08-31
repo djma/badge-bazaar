@@ -37,7 +37,6 @@ async function cachePubKeys() {
 
       const pubkey = await getPubKeyDBCache(addr);
       console.log(addr, pubkey);
-      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // pubkey groups //
@@ -63,7 +62,7 @@ async function cachePubKeys() {
     );
     const pubkeys = addresses
       .map((a) => addrPubkeysMap.get(a.toLowerCase()))
-      .filter((p) => p !== undefined);
+      .filter((p) => p !== undefined && p !== null);
     console.log("pubkeys size: ", pubkeys.length);
     const pubkeyTree = new Tree(
       treeDepth,
