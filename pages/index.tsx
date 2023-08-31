@@ -508,25 +508,71 @@ function MessageBoard() {
         </tbody>
       </table>
       <br />
-      <br />
-      <div style={{ paddingLeft: "80px" }}>
+      <div style={{ paddingLeft: "40px" }}>
         <WhaleASCII />
       </div>
+      <SubscriptionBox />
     </div>
   );
 }
 
 function WhaleASCII() {
   const whale = `
-      ▄██████████████▄▐█▄▄▄▄█▌
- sup  ████████████████▌▀▀██▀▀
-      ████▄████████████▄▄█▌
-      ▄▄▄▄▄██████████████▀
+             ▄██████████████▄▐█▄▄▄▄█▌
+        sub  ████████████████▌▀▀██▀▀
+ ...scribe?  ████▄████████████▄▄█▌
+             ▄▄▄▄▄██████████████▀
   `;
   return (
     <pre>
       <code>{whale}</code>
     </pre>
+  );
+}
+
+function SubscriptionBox() {
+  const [email, setEmail] = React.useState("");
+  const [hasSubscribed, setHasSubscribed] = React.useState(false);
+
+  return (
+    <div>
+      <input
+        type="text"
+        id="email"
+        placeholder="vitalik@gmail.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyPress={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            document.getElementById("subscribeButton").click();
+          }
+        }}
+      />
+      <button
+        id="subscribeButton"
+        style={{ marginLeft: "6px", verticalAlign: "top" }}
+        disabled={email.length === 0}
+        onClick={async () => {
+          setHasSubscribed(true);
+          await fetch("/api/subscribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+            }),
+          });
+        }}
+      >
+        Subscribe
+      </button>
+      &nbsp;
+      <span style={{ verticalAlign: "bottom" }}>
+        {hasSubscribed ? "subscribed!" : ""}
+      </span>
+    </div>
   );
 }
 
