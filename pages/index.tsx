@@ -196,7 +196,7 @@ function Welcome() {
   return (
     <div>
       <h1>Welcome to Badge Bazaar</h1>
-      <img src="/bazaar.png" alt="Badge Bazaar" />
+      <img src="/bazaar.png" alt="Badge Bazaar" width={"400px"} />
       <p>This is Badge Bazaar</p>
       <p>You can do anything at Badge Bazaar</p>
       <p>Anything is possible at Badge Bazaar</p>
