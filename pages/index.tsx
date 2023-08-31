@@ -72,11 +72,10 @@ function App() {
 }
 
 function Tabs() {
-  const [currentTab, setCurrentTab] = React.useState(
-    window.location.hash.slice(1) ?? "welcome"
-  );
+  const [currentTab, setCurrentTab] = React.useState(null);
 
   React.useEffect(() => {
+    setCurrentTab(window.location.hash.slice(1));
     const handleHashChange = () => {
       setCurrentTab(window.location.hash.slice(1));
     };
