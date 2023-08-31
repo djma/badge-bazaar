@@ -13,7 +13,7 @@ async function cachePubKeys() {
   const groups = await prisma.claimGroup.findMany({
     where: {
       OR: [
-        { name: "debank-whale1M-20230829" },
+        { name: "whale1M" },
         // { name: "whale1M-20230825" },
         // { name: "ethereumGenesis" },
         // { name: "nft-milady-20230823" },
@@ -33,7 +33,7 @@ async function cachePubKeys() {
   for (const group of groups) {
     const addresses: string[] = await fetchWasabiJsonNode(group.addressesUri);
     for (const addr of addresses) {
-      // if (addr < "0x87e") continue;
+      if (addr < "0x3cd9f") continue;
 
       const pubkey = await getPubKeyDBCache(addr);
       console.log(addr, pubkey);

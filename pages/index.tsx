@@ -40,19 +40,11 @@ export default function Home() {
 }
 
 function App() {
-  const [currentTab, setCurrentTab] = React.useState("welcome");
   const [ethereum, setEthereum] = React.useState<any>(null);
 
   React.useEffect(() => {
     const { ethereum } = window as any;
     setEthereum(ethereum);
-    const handleHashChange = () => {
-      setCurrentTab(window.location.hash.slice(1));
-    };
-    window.addEventListener("hashchange", handleHashChange);
-    return () => {
-      window.removeEventListener("hashchange", handleHashChange);
-    };
   }, []);
 
   // No idea why if I remove this block, I get a "window is not defined" error
@@ -510,8 +502,8 @@ function MessageBoard() {
       <br />
       <div style={{ paddingLeft: "40px" }}>
         <WhaleASCII />
+        <SubscriptionBox />
       </div>
-      <SubscriptionBox />
     </div>
   );
 }
