@@ -459,6 +459,16 @@ function MessageBoard() {
               ? message.message.split(":")[1]
               : message.message;
             const claimName = message.MessageClaim[0]?.claim.name;
+            const claimNameStyled =
+              claimName === "whale10M" ? (
+                <b style={{ color: "red" }}>{claimName}</b>
+              ) : claimName === "ethereumGenesis" ? (
+                <b style={{ color: "red" }}>{claimName}</b>
+              ) : claimName === "whale1M" ? (
+                <b>{claimName}</b>
+              ) : (
+                claimName
+              );
             const createdAt = new Date(message.createdAt).toLocaleString();
             return (
               <tr key={message.id}>
@@ -474,7 +484,7 @@ function MessageBoard() {
                       {msg}
                       <div style={{ textAlign: "right" }}>
                         <br />~{username}
-                        <br />({claimName}){" "}
+                        <br />({claimNameStyled})
                       </div>
                       <hr />
                     </div>
