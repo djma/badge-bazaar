@@ -21,10 +21,14 @@ export function ConnectWalletButton() {
     });
   }, []);
 
-  if (typeof window === "undefined") {
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (isMobile) {
     return (
       <div>
-        <p>Only supported in browser.</p>
+        <p>
+          The libraries for generating zk-proofs are only supported in the
+          browser.
+        </p>
       </div>
     );
   }

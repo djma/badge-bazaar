@@ -14,7 +14,30 @@ export async function processAndSave(name: string, addresses: string[]) {
   // log current milliseconds
   const start = Date.now();
   console.log(Date.now());
-  addresses = [...new Set(addresses.filter((a) => a.length == 42))]
+
+  const addrPubkeys = await prisma.addressPublicKey.findMany({
+    where: {
+      address: {
+        in: addresses.map((a) => a.toLowerCase()),
+      },
+    },
+    select: {
+      address: true,
+      publicKey: true,
+      isContract: true,
+    },
+  });
+  const contractAddresses = addrPubkeys
+    .filter((ap) => ap.isContract)
+    .map((ap) => ap.address);
+
+  addresses = [
+    ...new Set(
+      addresses.filter(
+        (a) => a.length == 42 && !contractAddresses.includes(a.toLowerCase())
+      )
+    ),
+  ]
     .map((a) => a.toLowerCase())
     .sort();
 
@@ -62,18 +85,6 @@ export async function processAndSave(name: string, addresses: string[]) {
 
   console.log(addresses.map((a) => a.toLowerCase()).slice(0, 10));
 
-  const addrPubkeys = await prisma.addressPublicKey.findMany({
-    where: {
-      address: {
-        in: addresses.map((a) => a.toLowerCase()),
-      },
-    },
-    select: {
-      address: true,
-      publicKey: true,
-    },
-  });
-
   console.log("addrPubkeys size: ", addrPubkeys.length);
 
   const addrPubkeysMap = new Map(
@@ -81,7 +92,7 @@ export async function processAndSave(name: string, addresses: string[]) {
   );
   const pubkeys = addresses
     .map((a) => addrPubkeysMap.get(a.toLowerCase()))
-    .filter((p) => p !== undefined);
+    .filter((p) => p !== undefined && p !== null);
   console.log("pubkeys size: ", pubkeys.length);
   const pubkeyTree = new Tree(
     treeDepth,

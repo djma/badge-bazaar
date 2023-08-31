@@ -22,8 +22,8 @@ export default async function handler(
             in: [
               "ethereumGenesis",
               "alliance-hot-wallet",
-              "whale10M",
-              "whale1M",
+              "whale10M-20230829",
+              "whale1M-20230829",
               "debank-allRanked-20230825",
             ],
           },
@@ -41,5 +41,6 @@ export default async function handler(
       rootHex: true,
     },
   });
+
   res.status(200).json(claimGroups);
 }

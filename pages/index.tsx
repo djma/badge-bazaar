@@ -166,26 +166,24 @@ function ClaimDescriptions() {
     <div>
       <h1>Claim Descriptions</h1>
       <h2>ethereumGenesis</h2>
-      <p>Was part of the original 8893 addresses that received genesis eth.</p>
-      <h2>debank-allRanked</h2>
       <p>
-        Is among the top 10k ranked addresses on DeBank. This means they must
-        have connected their wallet at least once.
+        Was part of the original <a href="https://etherscan.io/block/0">8893</a>{" "}
+        addresses that received genesis eth.
+      </p>
+      <h2>debank-top10k</h2>
+      <p>
+        Is among the top 10k addresses that have{" "}
+        <a href="https://debank.com/ranking">signed on to DeBank.</a>
       </p>
       <h2>nft-***</h2>
       <p> Owns at least one of the nft mentioned.</p>
       <h2>whale-1M</h2>
-      <p> Owns at least 1M USD worth of assets by either: </p>
-      <ul>
-        <li>
-          Connecting to DeBank, and DeBank valuing their address above 1M USD
-        </li>
-        <li>
-          Holding at least 1M USD worth of dai, usdc, wbtc, weth, steth, or
-          wsteth.
-        </li>
-      </ul>
-      <p>Whale indexing to be improved.</p>
+      <p>
+        Owns at least 1M USD worth of assets according to{" "}
+        <a href="https://github.com/DeBankDeFi/web3-data">DeBank.</a>
+      </p>
+      <h2>whale-10M</h2>
+      <p>Same, but 10M USD.</p>
     </div>
   );
 }
@@ -509,7 +507,26 @@ function MessageBoard() {
           })}
         </tbody>
       </table>
+      <br />
+      <br />
+      <div style={{ paddingLeft: "80px" }}>
+        <WhaleASCII />
+      </div>
     </div>
+  );
+}
+
+function WhaleASCII() {
+  const whale = `
+      ▄██████████████▄▐█▄▄▄▄█▌
+ sup  ████████████████▌▀▀██▀▀
+      ████▄████████████▄▄█▌
+      ▄▄▄▄▄██████████████▀
+  `;
+  return (
+    <pre>
+      <code>{whale}</code>
+    </pre>
   );
 }
 

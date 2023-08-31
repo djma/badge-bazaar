@@ -57,8 +57,8 @@ async function processFiles() {
     console.log(`whale10m: ${whale10m.length}`);
     console.log(`whale1m: ${whale1m.length}`);
 
-    // await processAndSave(`debank-whale10M-20230829`, whale10m);
-    // await processAndSave(`debank-whale1M-20230829`, whale1m);
+    await processAndSave(`whale10M-20230829`, whale10m);
+    await processAndSave(`whale1M-20230829`, whale1m);
   } catch (error) {
     console.error("An error occurred:", error);
   }
