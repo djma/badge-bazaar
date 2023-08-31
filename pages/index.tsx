@@ -424,7 +424,15 @@ function MessageBoard() {
       <table style={{ borderSpacing: "10px 0" }}>
         <thead>
           <tr>
-            <th style={{ paddingLeft: "10px", minWidth: "300px" }}>Message</th>
+            <th
+              style={{
+                paddingLeft: "10px",
+                minWidth: "340px",
+                maxWidth: "340px",
+              }}
+            >
+              Message
+            </th>
             <th style={{ paddingLeft: "10px" }}>Proof</th>
           </tr>
         </thead>
@@ -445,7 +453,8 @@ function MessageBoard() {
                   style={{
                     paddingLeft: "10px",
                     paddingBottom: "20px",
-                    minWidth: "300px",
+                    minWidth: "340px",
+                    maxWidth: "340px",
                   }}
                 >
                   {

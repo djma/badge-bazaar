@@ -31,9 +31,10 @@ model ClaimGroup {
 }
 
 model Message {
-  id           Int            @id @default(autoincrement())
-  createdAt    DateTime       @default(now())
-  message      String
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  message   String   @db.VarChar(2048)
+
   eip712       String
   MessageClaim MessageClaim[]
 }
