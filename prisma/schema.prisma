@@ -59,8 +59,9 @@ model MessageClaim {
 }
 
 model AddressPublicKey {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  address   String   @unique
-  publicKey String   @unique
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  address    String   @unique
+  publicKey  String?  @unique
+  isContract Boolean
 }

@@ -21,6 +21,23 @@ export function ConnectWalletButton() {
     });
   }, []);
 
+  if (typeof window === "undefined") {
+    return (
+      <div>
+        <p>Only supported in browser.</p>
+      </div>
+    );
+  }
+
+  const { ethereum } = window as any;
+  if (!ethereum) {
+    return (
+      <div>
+        <p>Please install a browser wallet.</p>
+      </div>
+    );
+  }
+
   const addressToDisplay = showAddress ? walletAddress : "*".repeat(10);
 
   return (

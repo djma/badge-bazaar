@@ -13,7 +13,7 @@ import { ClaimGroup, ClaimType, Message } from "@prisma/client";
 import { hashMessage } from "ethers";
 import { PostMessageRequest } from "./api/postMessage";
 import { PcdUI } from "@/components/PcdUI";
-import { ConnectWalletButton } from "@/components/ConnectWalletButton";
+import { ConnectWalletButton } from "../components/ConnectWalletButton";
 import {
   adjectives,
   animals,
@@ -55,10 +55,11 @@ function App() {
     };
   }, []);
 
+  // No idea why if I remove this block, I get a "window is not defined" error
   if (!ethereum) {
     return (
       <div>
-        <p>Please install a browser wallet</p>
+        <Tabs />
       </div>
     );
   }
@@ -483,6 +484,9 @@ function ProofCheckmark({ message }: { message: MessageWithClaims }) {
   );
 
   async function verifyProof() {
+    if (typeof window === "undefined") {
+      alert("Only supported in browser.");
+    }
     const proofHex = await fetchWasabiText(message.MessageClaim[0].proofUri);
     const publicInputHex = await fetchWasabiText(
       message.MessageClaim[0].publicInputUri
@@ -503,6 +507,14 @@ function ProofCheckmark({ message }: { message: MessageWithClaims }) {
 
     setIsVerified(valid);
   }
+}
+
+async function fetchJson(url: string) {
+  return fetch(url).then((res) => res.json());
+}
+async function fetchText(url: string) {
+  const res = await fetch(url);
+  return await res.text();
 }
 
 async function getMerklePath(

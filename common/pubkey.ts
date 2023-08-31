@@ -35,14 +35,28 @@ export function getRawPubKeyBuffer(pubKey: string): Buffer {
   return Buffer.from(pubKey.slice(hexPubkeyOffset), "hex");
 }
 
-export async function getPubKeyDBCache(address: string) {
-  const addrPubkey = await prisma.addressPublicKey.findUnique({
+export async function getPubKeyDBCache(
+  address: string
+): Promise<string | null> {
+  const addrPubkeyRow = await prisma.addressPublicKey.findUnique({
     where: {
       address: address,
     },
   });
-  if (addrPubkey) {
-    return addrPubkey.publicKey;
+  if (addrPubkeyRow) {
+    // May be null if it's a contract
+    return addrPubkeyRow.publicKey;
+  }
+
+  if (await isContract(address)) {
+    await prisma.addressPublicKey.create({
+      data: {
+        address: address,
+        publicKey: null,
+        isContract: true,
+      },
+    });
+    return null;
   }
 
   const pubkeyFromTxn = await getPubKeyFromTxn(address);
@@ -52,10 +66,16 @@ export async function getPubKeyDBCache(address: string) {
       data: {
         address: address,
         publicKey: pubkeyFromTxn,
+        isContract: false,
       },
     });
   }
   return pubkeyFromTxn;
+}
+
+async function isContract(address: string) {
+  const code = await alchemy.core.getCode(address);
+  return code !== "0x";
 }
 
 async function getPubKeyFromTxn(address: string) {
