@@ -368,11 +368,12 @@ function MessageBoard() {
       <br />
       <textarea
         id="pseudonym"
+        contentEditable={false}
         value={pseudonym}
-        onChange={(e) => {
-          localStorage.setItem("pseudonym", e.target.value);
-          setPseudonym(e.target.value);
-        }}
+        // onChange={(e) => {
+        //   localStorage.setItem("pseudonym", e.target.value);
+        //   setPseudonym(e.target.value);
+        // }}
         rows={1}
         cols={30}
       />
@@ -423,29 +424,51 @@ function MessageBoard() {
       <table style={{ borderSpacing: "10px 0" }}>
         <thead>
           <tr>
-            <th>Created At</th>
-            <th style={{ paddingLeft: "10px" }}>Claim</th>
-            <th style={{ paddingLeft: "10px" }}>Message</th>
+            <th style={{ paddingLeft: "10px", minWidth: "300px" }}>Message</th>
             <th style={{ paddingLeft: "10px" }}>Proof</th>
           </tr>
         </thead>
         <tbody>
-          {messages.map((message) => (
-            <tr key={message.id}>
-              <td>{new Date(message.createdAt).toLocaleString()}</td>
-              <td style={{ paddingLeft: "10px" }}>
-                {message.MessageClaim[0]?.claim.name}
-              </td>
-              <td style={{ paddingLeft: "10px" }}>{message.message}</td>
-              <td style={{ paddingLeft: "10px" }}>
-                {message.MessageClaim[0] ? (
-                  <ProofCheckmark message={message} />
-                ) : (
-                  ""
-                )}
-              </td>
-            </tr>
-          ))}
+          {messages.map((message) => {
+            const username =
+              (message.message.includes(":") &&
+                message.message.split(":")[0]) ||
+              "anon";
+            const msg = message.message.includes(":")
+              ? message.message.split(":")[1]
+              : message.message;
+            const claimName = message.MessageClaim[0]?.claim.name;
+            const createdAt = new Date(message.createdAt).toLocaleString();
+            return (
+              <tr key={message.id}>
+                <td
+                  style={{
+                    paddingLeft: "10px",
+                    paddingBottom: "20px",
+                    minWidth: "300px",
+                  }}
+                >
+                  {
+                    <div>
+                      {msg}
+                      <div style={{ textAlign: "right" }}>
+                        ~{username}
+                        <br />({claimName}){" "}
+                      </div>
+                    </div>
+                  }
+                </td>
+
+                <td style={{ paddingLeft: "10px", paddingBottom: "20px" }}>
+                  {message.MessageClaim[0] ? (
+                    <ProofCheckmark message={message} />
+                  ) : (
+                    ""
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
