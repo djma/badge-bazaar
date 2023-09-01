@@ -7,6 +7,7 @@ import AWS from "aws-sdk";
 import * as dotenv from "dotenv";
 import path from "path";
 import upload from "@/common/uploadBlob";
+import { tweet } from "@/common/tweet";
 
 dotenv.config();
 
@@ -92,6 +93,7 @@ export default async function handler(
           },
           select: {
             id: true,
+            name: true,
           },
         })
       : await prisma.claimGroup.findFirst({
@@ -100,6 +102,7 @@ export default async function handler(
           },
           select: {
             id: true,
+            name: true,
           },
         });
 
@@ -120,6 +123,14 @@ export default async function handler(
       claimType: addrOrPubKey,
     },
   });
+
+  try {
+    const msg = message.includes(":") ? message.split(":")[1] : message;
+    const tweetMsg = `(${claim.name}): ${msg}`;
+    await tweet(tweetMsg);
+  } catch (e) {
+    console.log(e);
+  }
 
   res.status(200).json(newMessage);
 }

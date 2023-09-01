@@ -60,16 +60,24 @@ export function ConnectWalletButton() {
           Connect Wallet
         </button>
       )}
-      {walletAddress && (
-        <label>
-          <input
-            type="checkbox"
-            checked={showAddress}
-            onChange={(e) => setShowAddress(e.target.checked)}
-          />
-          Show address: {addressToDisplay}
-        </label>
-      )}
+      {walletAddress && ShownAddress()}
     </div>
   );
+
+  function ShownAddress() {
+    return <p>Connected address: {walletAddress}</p>;
+  }
+
+  function HiddenAddress(): React.ReactNode {
+    return (
+      <label>
+        <input
+          type="checkbox"
+          checked={showAddress}
+          onChange={(e) => setShowAddress(e.target.checked)}
+        />
+        Show address: {addressToDisplay}
+      </label>
+    );
+  }
 }

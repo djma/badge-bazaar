@@ -509,11 +509,12 @@ function MessageBoard() {
           })}
         </tbody>
       </table>
-      <br />
       <div style={{ paddingLeft: "40px" }}>
         <WhaleASCII />
-        <SubscriptionBox />
       </div>
+      {"``'-.,_,.-'``'-.,_,."}
+      <a href="https://twitter.com/0xWhaleSongs">@0xWhaleSongs</a>
+      {"``'-.,_,.-'``'-.,_,."}
     </div>
   );
 }
@@ -523,8 +524,7 @@ function WhaleASCII() {
              ▄██████████████▄▐█▄▄▄▄█▌
         sub  ████████████████▌▀▀██▀▀
  ...scribe?  ████▄████████████▄▄█▌
-             ▄▄▄▄▄██████████████▀
-  `;
+             ▄▄▄▄▄██████████████▀`;
   return (
     <pre>
       <code>{whale}</code>
