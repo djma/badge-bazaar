@@ -24,7 +24,7 @@ export default async function handler(
               "alliance-hot-wallet",
               "whale10M",
               "whale1M",
-              "debank-allRanked-20230825",
+              "debank-top10k",
             ],
           },
         },

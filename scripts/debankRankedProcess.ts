@@ -72,9 +72,9 @@ async function processFiles() {
     console.log(`whale1m: ${whale1m.length}`);
     console.log(`allRanked: ${allRanked.length}`);
 
-    await processAndSave(`debank-whale10M-20230825`, whale10m);
-    await processAndSave(`debank-whale1M-20230825`, whale1m);
-    await processAndSave(`debank-allRanked-20230825`, allRanked);
+    // await processAndSave(`debank-whale10M-20230825`, whale10m);
+    // await processAndSave(`debank-whale1M-20230825`, whale1m);
+    await processAndSave(`debank-top10k`, allRanked);
   } catch (error) {
     console.error("An error occurred:", error);
   }
