@@ -236,6 +236,7 @@ function MessageBoard() {
     );
 
     // Heavy lifting starts
+    console.log("Downloading group information...");
     const claimGroup: ClaimGroup = await (
       await fetch(`/api/claimGroup?name=${selectedClaim.name}`)
     ).json();
@@ -274,6 +275,7 @@ function MessageBoard() {
         : defaultAddressMembershipPConfig
     );
     await prover.initWasm();
+    console.log("Creating zk group membership proof...");
     const nizk = await prover.prove(signature!, msgHashBuffer, merklePath);
     const publicInputHex = Buffer.from(nizk.publicInput.serialize()).toString(
       "hex"
@@ -282,6 +284,7 @@ function MessageBoard() {
 
     console.log("groupProof", nizk);
 
+    console.log("Posting message with proof, server verifying...");
     await fetch("/api/postMessage", {
       method: "POST",
       headers: {
@@ -296,6 +299,7 @@ function MessageBoard() {
     });
     // Heavy lifting ends
 
+    console.log("Success! Reloading messages...");
     await fetchMessages();
   };
 
@@ -603,12 +607,14 @@ async function getMerklePath(
   if (!id) {
     return null;
   }
+  console.log("Downloading group addresses...");
   const addrs: string[] = await fetchWasabiJson(idsUri);
   const index = addrs.findIndex((addr) => addr === id);
   if (index === -1) {
     return null;
   }
 
+  console.log("Downloading pre-computed merkle paths...");
   const addrPaths: string[][] = await fetchWasabiJson(idsPathsUri);
 
   const treeDepth = 20; // Provided circuits have tree depth = 20
