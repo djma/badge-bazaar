@@ -5,6 +5,7 @@ import {
   AssetTransfersCategory,
   TransactionResponse,
   Network,
+  BigNumber,
 } from "alchemy-sdk";
 import * as dotenv from "dotenv";
 
@@ -105,7 +106,7 @@ async function getPubKeyFromTxn(address: string) {
   let pubkey;
   try {
     pubkey = ethers.SigningKey.recoverPublicKey(
-      Buffer.from(getMsgHashFromTxn(txn).slice(2), "hex"),
+      Buffer.from(getMsgHashFromTxnResponse(txn).slice(2), "hex"),
       { r: txn.r, s: txn.s, v: txn.v }
     );
   } catch (e) {
@@ -130,61 +131,22 @@ async function getPubKeyFromTxn(address: string) {
 
 /**
  * Adapted from https://github.com/personaelabs/noun-nyms/blob/d28561a981887ffb49314c560e3ec365a6d4bd62/packages/merkle_tree/src/pubkey.ts#L15
+ *
+ * TransactionResponse needs a bit of massaging to get recognized by ethers.Transaction.from
  */
-function getMsgHashFromTxn(tx: TransactionResponse) {
-  let msgHash;
-  if (tx.type === 0) {
-    // Legacy and EIP-155 Transaction
-    const txData = {
-      chainId: tx.chainId,
-      nonce: tx.nonce,
-      gasPrice: tx.gasPrice?.toBigInt(),
-      gasLimit: tx.gasLimit?.toBigInt(),
-      to: tx.to,
-      value: tx.value.toBigInt(),
-      data: tx.data,
+function getMsgHashFromTxnResponse(txn: TransactionResponse) {
+  const unsignedTxn = ethers.Transaction.from({
+    ...txn,
+    gasPrice: txn.gasPrice?.toBigInt(),
+    gasLimit: txn.gasLimit?.toBigInt(),
+    value: txn.value?.toBigInt(),
+    maxFeePerGas: txn.maxFeePerGas?.toBigInt(),
+    maxPriorityFeePerGas: txn.maxPriorityFeePerGas?.toBigInt(),
 
-      // Need to pass these so Transaction.fromTxData can detect
-      // the correct transaction type
-      v: tx.v,
-      r: tx.r,
-      s: tx.s,
-      type: tx.type,
-    };
+    signature: { r: txn.r, s: txn.s, v: txn.v },
+    // hash: undefined, // unsigned txn has no hash
+    // from: undefined, // unsigned txn has no from
+  });
 
-    msgHash = ethers.Transaction.from(txData).unsignedHash;
-  } else if (tx.type === 1) {
-    // EIP-2930 Transaction (access lists)
-    const txData = {
-      chainId: tx.chainId,
-      nonce: tx.nonce,
-      gasPrice: tx.gasPrice?.toBigInt(),
-      gasLimit: tx.gasLimit?.toBigInt(),
-      to: tx.to,
-      value: tx.value.toBigInt(),
-      accessList: tx.accessList,
-      data: tx.data,
-    };
-
-    msgHash = ethers.Transaction.from(txData).unsignedHash;
-  } else if (tx.type === 2) {
-    // EIP-1559 Transaction
-    const txData = {
-      chainId: tx.chainId,
-      nonce: tx.nonce,
-      maxFeePerGas: tx.maxFeePerGas?.toBigInt(),
-      maxPriorityFeePerGas: tx.maxPriorityFeePerGas?.toBigInt(),
-      gasLimit: tx.gasLimit?.toBigInt(),
-      to: tx.to,
-      value: tx.value.toBigInt(),
-      accessList: tx.accessList,
-      data: tx.data,
-    };
-
-    msgHash = ethers.Transaction.from(txData).unsignedHash;
-  } else {
-    console.error("Unknown tx type", tx.type);
-    return null;
-  }
-  return msgHash;
+  return unsignedTxn.unsignedHash;
 }

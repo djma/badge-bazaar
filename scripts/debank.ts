@@ -18,6 +18,9 @@ interface User {
 const whale10m = [];
 const whale1m = [];
 
+/**
+ * Data comes from https://github.com/DeBankDeFi/web3-data/tree/main/valuable-users
+ */
 async function processData(data: User[]): Promise<void> {
   for (const rank of data) {
     const { id, usd_value } = rank;
