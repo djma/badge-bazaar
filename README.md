@@ -3,7 +3,9 @@
 ### What is this?
 
 https://x.com/0xdjma/status/1699438989919371400?s=20
+
 https://x.com/0xdjma/status/1709203041919062234?s=20
+
 https://medium.com/alliancedao/whale-songs-explained-28e14ddf7c27
 
 ## Getting Started
